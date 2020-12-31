@@ -1,0 +1,9 @@
+*.meta
+*.png
+*.asset
+xNode/XNode.asmdef
+xNode/Editor/XNodeEditor.asmdef
+xNode/Editor/Resources/xnode_node_workfile.psd
+xNode/Editor/Resources/ScriptTemplates/xNode_NodeGraphTemplate.cs.txt
+xNode/Editor/Resources/ScriptTemplates/xNode_NodeTemplate.cs.txt
+!Casablanc\*
