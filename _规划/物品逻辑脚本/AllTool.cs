@@ -30,7 +30,7 @@ public static class AllTool
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 100, layerMask)) {
                 if (hit.collider.gameObject.tag == "Water") {
-                    if (Math.Distance(hit.point, ((Item)this).GetItemInstanceTransform().position) <= 10) {
+                    if (Math.Distance(hit.point, this.Info_Handler.Instance.transform.position) <= 10) {
                         ((Container)this).AddItem(Items.GetItemByItemTypeAndItemIDStatic(ItemType.Materials, 1, 
                         (Item) => { 
                             ((Item_Detail)Item).Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = 1; 
@@ -43,7 +43,7 @@ public static class AllTool
             return this.ContainerState.Contents[0] != Items.Empty;
         }
         public override int GetUIheld() {
-            return this.ContainerState.Contents[0].Getheld();
+            return this.ContainerState.Contents[0].Held;
         }
 
         public override void Collision(Collision collision) {
@@ -115,8 +115,8 @@ public abstract class LighterStatic:ContainerStatic,Lighter
 
     private LighterState lighterState;
     public void LightSwitch() {
-        if (this.itemGraph.GetInstance()) {
-            this.itemGraph.GetInstance().transform.Find("Light").GetComponent<Light>().enabled = !this.LighterState.light;
+        if (this.Info_Handler.Instance) {
+            this.Info_Handler.Instance.transform.Find("Light").GetComponent<Light>().enabled = !this.LighterState.light;
             this.LighterState.light = !this.LighterState.light;
         }
     }
@@ -130,7 +130,7 @@ public abstract class LighterStatic:ContainerStatic,Lighter
         */
     }
     public void ElectricityRun() {
-        this.ContainerState.Contents[0].Decheld(1);
+        this.ContainerState.Contents[0].Item_Held_Handler.Decheld(1);
     }
     public override void Use1() {
         ToolComponent.threw(this);
@@ -140,7 +140,7 @@ public abstract class LighterStatic:ContainerStatic,Lighter
     }
 
     public override void __SynchronizationBeforeInstance() {
-        this.itemGraph.GetInstance().transform.Find("Light").GetComponent<Light>().enabled = this.LighterState.light;
+        this.Info_Handler.Instance.transform.Find("Light").GetComponent<Light>().enabled = this.LighterState.light;
 
     }
 }

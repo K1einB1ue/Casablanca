@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HashGenerator : MonoBehaviour
+public class HashGenerator
 {
     Dictionary<int, bool> VisTable = new Dictionary<int, bool>();
     private int Mark = -1;

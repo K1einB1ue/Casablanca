@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,7 +13,7 @@ public class AllInput
             this.StateStore.Handing = Vector2.up;
         }
         public override void update() {
-            
+
         }
         public override void fixedupdate() {
             if (this.enable) {
@@ -57,7 +57,7 @@ public class AllInput
             this.StateStore.Handing = Vector2.up;
         }
         public override void update() {
-            
+
         }
         public override void fixedupdate() {
             if (this.enable) {
@@ -81,12 +81,12 @@ public class AllInput
             this.enable = false;
         }
     }
-} 
+}
 
 
 
 
-public abstract class InputStatic: MonoStatic ,InputInterface
+public abstract class InputStatic : MonoStatic, InputInterface
 {
     private Player player;
     public InputStatic(Player player) {
@@ -102,7 +102,8 @@ public abstract class InputStatic: MonoStatic ,InputInterface
         }
     }
     public bool enable { get; set; }
-    public InputState InputState { 
+    public InputState InputState
+    {
         get {
             if (this.inputState == null) {
                 this.inputState = new InputState();
@@ -112,7 +113,7 @@ public abstract class InputStatic: MonoStatic ,InputInterface
         }
         set {
             this.inputState = value;
-        } 
+        }
     }
 
     public StateStore StateStore
@@ -131,7 +132,7 @@ public abstract class InputStatic: MonoStatic ,InputInterface
     public StateStore stateStore;
 
     public InputState inputState;
-   
+
 }
 
 public class StateStore

@@ -64,15 +64,18 @@ public static class Items
     private static Item EPT;
     private static ItemStaticProperties.ItemStaticProperties EPTS;
 
-
     #region 物品获取函数及其实现
     public static void AddGenerators(ItemType itemType, int itemID,Type type){
         KeyValuePair<ItemType, int> keyValuePair = new KeyValuePair<ItemType, int>(itemType, itemID);
-        Generators.Add(keyValuePair, () => {
-            Item tmp = (Item)type.Assembly.CreateInstance(type.FullName);
-            ((Item_Init)tmp).Kernel_Init(itemType, itemID);
-            return tmp;
-        });
+        if (Generators.TryGetValue(keyValuePair, out var func)) {
+            Debug.LogError("物品ID多次映射! Type:" + itemType.ToString() + "  ID:" + itemID.ToString());
+        }
+        else {
+            Generators.Add(keyValuePair, () => {
+                Item tmp = (Item)type.Assembly.CreateInstance(type.FullName);
+                return tmp;
+            });
+        }
     }
 
     public static void AddIsContainer(ItemType itemType, int itemID, Type type) {
@@ -179,26 +182,7 @@ public static class Items
         return false;     
     }
     #endregion
-
-    public static Sprite GetSpriteByTypeAndID(ItemType ItemType,int ID) {
-        if (!(ItemType == ItemType.Container && ID == 0)) {
-            ItemStore temp = StaticPath.ItemLoad[ItemType, ID];
-            if (temp) {
-                return temp.sprite;
-            }
-        }
-        return null;
-    }
-    public static GameObject GetBodyByTypeAndID(ItemType ItemType, int ID) {
-        if (!(ItemType == ItemType.Container && ID == 0)) {
-            ItemStore temp = StaticPath.ItemLoad[ItemType, ID];
-            if (temp) {
-                return temp.ItemOrigin;
-            }
-        }
-        return null;
-    }
-    
+   
 }
 
 public interface Item_Detail {
@@ -206,10 +190,8 @@ public interface Item_Detail {
     Item_Held_Handler Item_Held_Handler { get; }
     Item_Object_Handler Item_Object_Handler { get; }
     Item_UI_Handler Item_UI_Handler { get; }
+    Item_Size_Handler Item_Size_Handler { get; }
     Item_Property GetItemProperty();
-}
-public interface Item_Init {
-    void Kernel_Init(ItemType itemType, int itemID);
 }
 public interface ItemOnGroundBase
 {
@@ -217,16 +199,10 @@ public interface ItemOnGroundBase
     void TriggerBase(Collider other);
 }
 
-public interface ItemGraph
-{
-    Vector3 GetCenter();
-    Vector2 GetCenterInScreen();
-}
 public interface ItemUI
 {
     ref ItemIntro GetItemIntroRef();
     ItemIntro GetItemIntro();
-    float GetItemHPrate();
     int GetUIheld();
     bool Displaycount();
 }
@@ -234,31 +210,20 @@ public interface ItemUI
 public interface ItemScript
 {
     Animator GetAnimator();
-    GameObject GetInstance();
-    Container Outercontainer { get; set; }
-    Container GetOutestcontainer();
-    int GetSize();
-    int GetOriginMax();
+    Container Outercontainer { get; set; }    
     List<BoxCollider> GetBoxCollider();
 }
 
-public interface ItemLogic
+public interface Item : Item_Detail
 {
-    bool IsHeld();
-    bool IsDroped();
-    bool IsInstanced();
-    bool IsInAContainer();
-    void Setsynchronization(Action action);
-    bool IsContainer();
-    Container GetOuterContainer();
-}
-public interface Item
-{
+    int ID { get; }
+    ItemType Type { get; }
+    GameObject Instance { get; }
+    bool IsContainer { get; }
     Container Outercontainer { get; set; }
+    Container Outestcontainer { get; }
+    int Held { get; }
     void OuterClear();
-    void InstancedOnTheGround(GameObject gameObject);
-    ItemType TypeGet();
-    int IDGet();
     void Destory();
     void update();
     void TriggerLoop1(bool Bool);
@@ -266,43 +231,35 @@ public interface Item
     void TriggerLoop3(bool Bool);
     void TriggerLoop4(bool Bool);
     void TriggerLoop5(bool Bool);
-    bool checkedheld();
-    void Setheld(int num);
-    void SetMaxheld(int num);
-    int Addheld(int num);
-    int Decheld(int num);
-    bool Trysum(Item itemIn);
-    int Getheld();
-    int GetMaxheld();
     void Use1();            
     void Use2();
     void Use3();
     void Use4();
     void Use5();
     void Use6(Item item,out Item itemoutEX);
-
+    bool Trysum(Item itemIn);
     void threw(Vector3 Dir);
     void Drop(Vector3 vector3);
-    void Instance(Vector3 vector3);
+    void InstanceTo(Vector3 vector3);
     void BeHeldButDrop(Transform transform);
     void Beheld(Transform transform);
-    Transform GetFatherTransform();
-    Transform GetItemInstanceTransform();
-    Renderer GetRenderer();
-    Sprite GetSprite();
     ContainerState GetContainerState();
     List<ItemNodeDynamic> GetItemNodes();
-
 }
 
-public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGraph, ItemOnGroundBase, Item_Detail, Item_Init
+public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 {
-
-    public Item_INFO_Handler Info_Handler
+    public ItemType Type => this.Info_Handler.Item_Property.ItemStaticProperties.ItemType;
+    public int ID => this.Info_Handler.Item_Property.ItemStaticProperties.ItemID;
+    public int Held => this.Info_Handler.Held;
+    public virtual bool IsContainer => false;
+    public GameObject Instance => this.Info_Handler.Instance;
+    
+    public virtual Item_INFO_Handler Info_Handler
     {
         get {
             if (this.INFO_Handler == null) {
-                this.INFO_Handler = new INFO_Handle_Layer_Normal();             
+                this.INFO_Handler = new Item_INFO_Handle_Layer_Normal();
             }
             return this.INFO_Handler;
         }
@@ -314,27 +271,9 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
     public Item_Held_Handler Item_Held_Handler => Info_Handler;
     public Item_Object_Handler Item_Object_Handler => Info_Handler;
     public Item_UI_Handler Item_UI_Handler => Info_Handler;
-    public Container Outercontainer
-    {
-        get {
-            return this.Out_Container;
-        }
-        set {
-            this.Out_Container = value;
-        }
-    }
-
-    public ItemGraphs itemGraph {
-        get {
-            if (this.itemgraph == null) {
-                this.itemgraph = new ItemGraphs();
-            }
-            return itemgraph;
-        }
-        set {
-            itemgraph = value;
-        }
-    }
+    public Item_Size_Handler Item_Size_Handler => Info_Handler;
+    public Container Outercontainer { get => this.Out_Container; set => this.Out_Container = value; }
+    public Container Outestcontainer => (Container)PreGetOutestcontainer(this);
     public ItemIntro ItemIntro
     {
         get {
@@ -351,7 +290,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
 
     private Container Out_Container;
     public Item_INFO_Handler INFO_Handler;
-    private ItemGraphs itemgraph;
     private ItemIntro itemIntro;
 
 
@@ -370,46 +308,33 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
     protected bool Trigger5 = false;
 
 
-    protected ItemStatic() {
-        this.itemGraph.Setsynchronization(__SynchronizationBeforeInstance);
-    }
+    protected ItemStatic() { }
+    
 
-    public int IDGet() {
-        return this.Info_Handler.Item_Property.ItemStaticProperties.ItemID;
-    }
-    public ItemType TypeGet() {
-        return this.Info_Handler.Item_Property.ItemStaticProperties.ItemType;
-    }
 
     public virtual void Death() {
         this.Info_Handler.Item_Property.ItemRuntimeProperties.destoryTriiger = ItemRuntimeProperties.DestoryTriiger.Destroyed;
         ((Item)this).OuterClear();
-        GameObject.Destroy(this.itemGraph.GetInstance());
+        this.Info_Handler.Destory();
     }
 
 
     public virtual void update() {
-        /*
-        if (!this.itemGraph.GraphInitial && this.info_Handler.Item_Property != null) {
-            if (this.info_Handler.Item_Property.ItemRuntimeProperties.ItemType != ItemType.Empty || this.info_Handler.Item_Property.ItemRuntimeProperties.ItemID != 0) {
-                itemGraph.MappingGraphByTypeAndID(this.info_Handler.Item_Property.ItemRuntimeProperties.ItemType, this.info_Handler.Item_Property.ItemRuntimeProperties.ItemID);
-                this.itemGraph.GraphInitial = true;
-            }   
-        }*/
-        this.Info_Handler.Trigger_Binded(this.__SynchronizationAfterItemPropertyConstructor);
+        this.Info_Handler.Trigger_Binded(this._AfterItemProperty);
         if (this.Info_Handler.Item_Property.ItemStaticProperties.useWays == ItemStaticProperties.UseWays.CanUse) {
             timer1.TimeingLoop(this.Use1, ref this.Trigger1);
             timer2.TimeingLoop(this.Use2, ref this.Trigger2);
             timer3.TimeingLoop(this.Use3, ref this.Trigger3);
             timer4.TimeingLoop(this.Use4, ref this.Trigger4);
-            timer5.TimeingLoop(this.Use5, ref this.Trigger5);
-
-            if (this.Info_Handler.DeathCheck()) {
-                this.DeathLogic(this.Death);
-            }
+            timer5.TimeingLoop(this.Use5, ref this.Trigger5);          
         }
-        
+        this.Update();
+        if (this.Info_Handler.DeathCheck()) {
+            this.DeathLogic(this.Death);
+        }
     }
+    public virtual void Update() { }
+
     #region 触发循环的底层调用
     public virtual void Use1() { }
     public virtual void Use2() { }
@@ -438,11 +363,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
         this.Trigger5 = Bool;
     }
     #endregion
-    public bool checkedheld() {
-        if (this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial<=0)
-            return true;
-        return false;
-    }
 
     #region 碰撞和触发器函数的底层调用
     public virtual void Collision(Item item) { }
@@ -472,7 +392,7 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
     public virtual void Trigger(Player player) { }
     #endregion
     private void SetItem() {
-        this.itemGraph.SetItem(this);
+        this.Info_Handler.AddItemComponent(this);
     }
     private void DeathLogic(Action action) {
         if (this.Info_Handler.Item_Property.ItemRuntimeProperties.deathTrigger == ItemRuntimeProperties.DeathTrigger.UnDeath) {
@@ -486,11 +406,11 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
     /// <param name="itemIn">尝试合并的物品也就是held减少的一方</param>
     /// <returns>是否发生了剔除</returns>
     bool Item.Trysum(Item itemIn) {
-        if (this.TypeGet() == itemIn.TypeGet()&&this.IDGet()==itemIn.IDGet()) {
-            itemIn.Setheld(((Item)this).Addheld(itemIn.Getheld()));
-            if (itemIn.Getheld() == 0) {
-                if (((ItemLogic)itemIn).IsInAContainer()) {
-                    ((ItemLogic)itemIn).GetOuterContainer().DelItem(itemIn);
+        if (this.Type == itemIn.Type&&this.ID==itemIn.ID) {
+            itemIn.Item_Held_Handler.SetHeld(((Item)this).Item_Held_Handler.Addheld(itemIn.Held));
+            if (itemIn.Held == 0) {
+                if (itemIn.Outercontainer!=null) {
+                    itemIn.Outercontainer.DelItem(itemIn);
                     itemIn.Destory();
                     itemIn = Items.Empty;
                     return true;
@@ -499,82 +419,40 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
         }
         return false;
     }
+
     void Item.OuterClear() {
         if (this.Outercontainer != null) {
             this.Outercontainer.DelItem(this);
         }
     }
-    void Item.InstancedOnTheGround(GameObject gameObject) {
-        this.itemGraph.ReplaceInstance(gameObject);
-    } 
-    void Item.Setheld(int num) {
-            this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = num;
-    }
-    /// <summary>
-    /// 返回增加后超过上限的数量 例子:输入3 实际5 最大6 返回3-(6-5)
-    /// </summary>
-    /// <param name="num">尝试增加的数量</param>
-    /// <returns>超过上限的数量</returns>
-    int Item.Addheld(int num) {
-        return ((Item_Held_Handler)this.Info_Handler).Addheld(num);
-    }
-    int Item.Decheld(int num) {
-        return ((Item_Held_Handler)this.Info_Handler).Decheld(num);
-    }
-    int Item.GetMaxheld() {
-        return this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial;
-    }
-    void Item.SetMaxheld(int num) {
-        this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial = num;
-    }
-    int Item.Getheld() {
-        return this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial;
-    }
-    /// <summary>
-    /// 可能有一些bug 目前的情况下
-    /// </summary>
-    /// <param name="Dir">使用的力</param>
+
+
     void Item.threw(Vector3 Dir) {
         PlayerManager.Main._DropThrewpre(Dir);      
     }
-    Transform Item.GetFatherTransform() {
-        return this.itemGraph.GetFatherTransform();
-    }
-    Transform Item.GetItemInstanceTransform() {
-        return this.itemGraph.GetItemInstanceTransform();
-    }
-    /// <summary>
-    /// 无论如何都安全的Destory无需额外判断.
-    /// </summary>
     public virtual void Destory() {
-        this.itemGraph.Destory();
+        this.Info_Handler.Destory();
     }
     public virtual void BeHeldButDrop(Transform transform) {
-        this.itemGraph.BeHeldButDrop(transform);
+        this.Info_Handler.BeHeldButDrop(transform);
         this.SetItem();
     }
     public virtual void Beheld(Transform transform) {
-        this.itemGraph.BeHeld(transform);
+        this.Info_Handler.BeHeld(transform);
         this.SetItem();
     }
-    public virtual void Instance(Vector3 vector3) {
-        this.itemGraph.BeInstance(vector3);
+    public virtual void InstanceTo(Vector3 vector3) {
+        this.Info_Handler.BeInstance(vector3);
         this.SetItem();
     }
     public virtual void Drop(Vector3 vector3) {
-        this.itemGraph.BeDropping(vector3);
+        this.Info_Handler.BeDropping(vector3);
         this.SetItem();
     }
 
-    Renderer Item.GetRenderer() {
-        return this.itemGraph.GetInstance().transform.Find("Graph").gameObject.GetComponent<Renderer>();
-    }
-    Sprite Item.GetSprite() {
-        return this.itemGraph.GetSprite();
-    }
     private Item PreGetOutestcontainer(Item item) {
-        if (((ItemScript)item).Outercontainer != null) {
-            Item temp = (Item)Outercontainer;
+        if (item.Outercontainer != null) {
+            Item temp = Outercontainer;
             return PreGetOutestcontainer(temp);
         }
         else
@@ -584,10 +462,10 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
 
     Animator ItemScript.GetAnimator() {
         try {
-            return this.itemGraph.GetInstance().GetComponent<Animator>();
+            return this.Instance.GetComponent<Animator>();
         }
         catch(NullReferenceException) {
-            Debug.LogError(String.Format("该物品不存在Animator  Type:{0} ID:{1}", this.TypeGet(), this.IDGet()));
+            Debug.LogError(String.Format("该物品不存在Animator  Type:{0} ID:{1}", this.Type, this.ID));
             return null;
         }
         catch (Exception) {
@@ -595,23 +473,11 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
             return null;
         }
     }
-    GameObject ItemScript.GetInstance() {
-        return this.itemGraph.GetInstance();
-    }
-    int ItemScript.GetOriginMax() {
-        return this.Info_Handler.Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Held.Held_Origin_Max;
-    }
-    int ItemScript.GetSize() {
-        return this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Size.Size__Initial;
-    }
-    Container ItemScript.GetOutestcontainer() {
-        return (Container)PreGetOutestcontainer(this);
-    }
 
     public virtual List<BoxCollider> GetBoxCollider() {
         List<BoxCollider> BoxColliders = new List<BoxCollider>();
-        if (this.itemgraph.Instanced) {
-            BoxColliders= BoxColliders.Concat(this.itemgraph.GetInstance().GetComponents<BoxCollider>()).ToList<BoxCollider>();
+        if (this.Instance) {
+            BoxColliders= BoxColliders.Concat(this.Instance.GetComponents<BoxCollider>()).ToList<BoxCollider>();
         }
         return BoxColliders;
     }
@@ -623,29 +489,13 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
         return null;
     }
 
+    private void _AfterItemProperty() {
+        this.Info_Handler.Setsynchronization_BeforeInstance(__SynchronizationBeforeInstance);
+        this.__SynchronizationAfterItemPropertyConstructor();
+    }
     public virtual void __SynchronizationAfterItemPropertyConstructor() { }
     public virtual void __SynchronizationBeforeInstance() { }
-    bool ItemLogic.IsHeld() {
-        return itemGraph.BeHelding;
-    }
-    bool ItemLogic.IsDroped() {
-        return itemGraph.Instanced;
-    }
-    bool ItemLogic.IsInstanced() {
-        return itemGraph.Instanced;
-    }
-    void ItemLogic.Setsynchronization(Action action) {
-        this.itemGraph.Setsynchronization(action);
-    }
-    bool ItemLogic.IsInAContainer() {
-        return this.Outercontainer != null;   
-    }
-    public virtual bool IsContainer() {
-        return false;
-    }
-    Container ItemLogic.GetOuterContainer() {
-        return this.Outercontainer;
-    }
+
 
 
 
@@ -654,29 +504,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
     }
     public virtual bool Displaycount() {
         return this.Info_Handler.Item_Property.ItemStaticProperties.numDisplayWays == ItemStaticProperties.NumDisplayWays.DisplayHeld;
-    }
-
-    Vector3 ItemGraph.GetCenter() {
-        Vector3 temp = new Vector3();
-        if (((ItemLogic)this).IsInstanced()) {
-            Transform tmp = ((ItemScript)this).GetInstance().transform.Find("Graph");
-            if (tmp != null) {
-                temp = tmp.position;
-            }
-            else {
-                tmp = ((ItemScript)this).GetInstance().transform.Find("Point");
-                temp = tmp.position;
-            }
-        }
-        return temp;
-    }
-    Vector2 ItemGraph.GetCenterInScreen() {
-        Vector3 temp = Camera.main.WorldToScreenPoint(((ItemGraph)this).GetCenter(), Camera.MonoOrStereoscopicEye.Mono);
-        return new Vector2(temp.x, temp.y);
-    }
-
-    float ItemUI.GetItemHPrate() {
-        return ((Item_UI_Handler)this.Info_Handler).GetHPrate();
     }
 
     public ref ItemIntro GetItemIntroRef() {
@@ -692,163 +519,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemLogic, ItemUI, ItemGrap
         return this.Info_Handler.Item_Property;
     }
 
-    void Item_Init.Kernel_Init(ItemType itemType, int itemID) {       
-        this.itemgraph.MappingGraphByTypeAndID(itemType, itemID);
-    }
-}
-
-public class ItemGraphs
-{
-
-    private GameObject gameobject;
-    private GameObject instance;
-    private Transform fathertransform;
-    private Sprite sprite;
-
-    private Action synchronization;
-
-    public bool Instanced = false;
-    public bool BeHelding = false;
-
-    public ItemGraphs() {
-    }
-    public void MappingGraphByTypeAndID(ItemType ItemType, int ID) {
-        sprite = Items.GetSpriteByTypeAndID(ItemType, ID);
-        gameobject = Items.GetBodyByTypeAndID(ItemType, ID);
-    }
-
-    public void ReplaceInstance(GameObject gameObjectIn) {
-        this.instance = gameObjectIn;
-        this.Instanced = true;
-    }
-    public void Setsynchronization(Action action) {
-        this.synchronization = action;
-    }
-    private void BeforeInstance() {
-        synchronization?.Invoke();
-    }
-    public void BeHeld(Transform transform) {
-        if (gameobject) {
-            if (!Instanced) {
-                Instanced = true;
-                BeHelding = true;
-                this.fathertransform = transform;
-                instance = GameObject.Instantiate(gameobject, transform, false);
-                BeforeInstance();
-                if (instance.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezeAll;
-                    rigidbody.isKinematic = false;
-                    rigidbody.useGravity = false;
-                    rigidbody.freezeRotation = true;
-                }
-                instance.layer = 8;
-            }
-        }
-    }
-    public void BeInstance(Vector3 vector3) {
-        if (gameobject) {
-            if (!Instanced) {
-                Instanced = true;
-                BeHelding = false;
-                instance = GameObject.Instantiate(gameobject, vector3, new Quaternion());
-                BeforeInstance();
-                if (instance.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
-                    rigidbody.isKinematic = false;
-                    rigidbody.useGravity = false;
-                    rigidbody.freezeRotation = false;
-                }
-                instance.layer = 9;
-            }
-        }
-    }
-    public void BeDropping(Vector3 vector3) {
-        if (gameobject) {
-            if (!Instanced) {
-                Instanced = true;
-                BeHelding = false;
-                instance = GameObject.Instantiate(gameobject, vector3, new Quaternion());
-                BeforeInstance();
-                if (instance.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
-                    rigidbody.isKinematic = false;
-                    rigidbody.useGravity = true;
-                    rigidbody.freezeRotation = false;
-                }
-                instance.layer = 9;
-            }
-            else {
-                BeforeInstance();
-                if (instance) {
-                    instance.transform.parent = null;
-                }
-                if (instance.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
-                    rigidbody.isKinematic = false;
-                    rigidbody.useGravity = true;
-                    rigidbody.freezeRotation = false;
-                }
-                instance.layer = 9;
-            }
-        }
-    }
-
-    public void BeHeldButDrop(Transform transform) {
-        if (gameobject) {
-            if (!Instanced) {
-                Instanced = true;
-                BeHelding = true;
-                this.fathertransform = transform;
-                instance = GameObject.Instantiate(gameobject, transform, false);
-                BeforeInstance();
-                if (instance.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ| RigidbodyConstraints.FreezeRotationY;
-                    rigidbody.isKinematic = true;
-                    rigidbody.useGravity = true;
-                    rigidbody.freezeRotation = false;
-                }
-                instance.gameObject.layer = 8;
-            }
-        }
-    }
-    public GameObject GetInstance() {
-        if (Instanced) {
-            return this.instance;
-        }
-        return null;
-    }
-    public Transform GetFatherTransform() {
-        return this.fathertransform;
-    }
-    public Transform GetItemInstanceTransform() {
-        return this.instance.transform;
-    }
-    public void Destory() {
-        if (Instanced&& instance) {
-            GameObject.Destroy(instance);
-            Instanced = false;
-            BeHelding = false;         
-        }else if(Instanced && !instance) {
-            Instanced = false;
-            BeHelding = false;
-        }
-    }
-    public void SetItem(Item item) {
-        if (item != Items.Empty) {
-            try {
-                if (instance.TryGetComponent<ItemOnTheGround>(out ItemOnTheGround itemOnTheGround)) {
-                    itemOnTheGround.itemOntheGround = item;
-                }
-            }
-            catch (MissingReferenceException) {
-                Debug.Log("");
-            }
-        }
-    }
-
-    public Sprite GetSprite() {
-        return this.sprite;
-    }
 }
 
 public class IntroInfo
@@ -1014,12 +684,16 @@ public class ItemIntro
 
 
 
-public interface Item_INFO_Handler : Item_UI_Handler, Item_Logic_Handler, Item_Values_Handler ,Item_Held_Handler,Item_Trigger_Handler, Item_Object_Handler , Item_synchronization_Handler
+public interface Item_INFO_Handler : 
+    Item_UI_Handler, Item_Logic_Handler, Item_Values_Handler,Item_Held_Handler,
+    Item_Trigger_Handler, Item_Object_Handler, Item_Size_Handler, Item_synchronization_Handler
 {
     Item_Property Item_Property { get; set; }
     bool Binded { get; }
     void Binding(Item_Property Bingding);
     void AddItemComponent(Item item);
+    void ReplaceInstance(GameObject Instance);
+    void Destory();
 }
 
 public interface Item_synchronization_Handler {
@@ -1027,6 +701,7 @@ public interface Item_synchronization_Handler {
 
 
 }
+
 public interface Item_Object_Handler {
     void BeHeld(Transform transform);
     void BeInstance(Vector3 vector3);
@@ -1043,7 +718,9 @@ public interface Item_Trigger_Handler {
 }
 public interface Item_UI_Handler {
     float GetHPrate();
-
+    ItemStaticProperties.ItemStaticGraphs Graph { get; }
+    Vector3 Center { get; }
+    Vector2 CenterInScreen { get; }
     //Vector3 GetCenter();
     //Vector2 GetCenterInScreen();
 }
@@ -1053,10 +730,19 @@ public interface Item_Logic_Handler {
 
   
 }
+public interface Item_Size_Handler
+{
+    int Size { get; }
+}
 public interface Item_Held_Handler {
+    int Held { get; }
+    int HeldMax { get; }
+    int HeldOriginMax { get; }
+    bool IsUseUp { get; }
     int Addheld(int num);
     int Decheld(int num);
-    int Getheld();
+    void SetMax(int max);
+    void SetHeld(int max);
 
 }
 public interface Item_Values_Handler {
@@ -1064,53 +750,83 @@ public interface Item_Values_Handler {
     void BeFixed(float FIX);
     
 }
-public class INFO_Handle_Layer_Normal : Values_Handle_Layer_Base {
-    public INFO_Handle_Layer_Normal(){ }
+public class Item_INFO_Handle_Layer_Normal : Item_INFO_Handle_Layer_Base {
+    public Item_INFO_Handle_Layer_Normal(){ }
 }
-public abstract class Values_Handle_Layer_Base : Item_INFO_Handler
+public class Item_INFO_Handle_Temp
+{
+    public Item_INFO_Handle_Temp_Trigger_Group Trigger_Group = new Item_INFO_Handle_Temp_Trigger_Group();
+    public bool Binded = false;
+}
+public class Item_INFO_Handle_Temp_Trigger_Group
+{
+    public bool Trigger_Binded = false;
+    public bool Trigger_Display = false;
+
+}
+public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
 {
     public bool Binded {
         get {
-            return this.binded;
+            return this.INFO_Handle_Temp.Binded;
         }
     }
     public Item_Property Item_Property {
-        get {
-            return this.item_Property;
-        }
-        set {
-            this.item_Property = value;
-        }
+        get {  return this.item_Property; }
+        set { this.item_Property = value; }
     }
-    public Values_Handle_Layer_Base() { }
+    public Item_INFO_Handle_Layer_Base() { }
 
-    private bool binded = false;
     private Item_Property item_Property;
+    private Item_INFO_Handle_Temp INFO_Handle_Temp = new Item_INFO_Handle_Temp();
 
-    private Trigger_Group trigger_Group = new Trigger_Group();
+
 
     #region INFO
     void Item_INFO_Handler.Binding(Item_Property Bingding) {
         this.item_Property = Bingding;
-        this.binded = true;
+        this.INFO_Handle_Temp.Binded = true;
+    }
+
+    void Item_INFO_Handler.ReplaceInstance(GameObject Instance) {
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_Unity.Instance = Instance;
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_Bool.Instanced = true;
+    }
+
+    void Item_INFO_Handler.Destory() {
+        if (Instanced && InstanceObj) {
+            GameObject.Destroy(InstanceObj);
+            Instanced = false;
+            BeHelding = false;
+        }
+        else if (Instanced && !InstanceObj) {
+            Instanced = false;
+            BeHelding = false;
+        }
     }
     #endregion
+ 
+
     #region Values
+    int Item_Size_Handler.Size => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Size.Size__Initial;
+
+    int Item_Held_Handler.HeldOriginMax => this.Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Held.Held_Origin_Max;
+    int Item_Held_Handler.HeldMax => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial;
+    int Item_Held_Handler.Held => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial;
     public virtual void BeDmged(float DMG) {
         this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial -= DMG - this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.DEF_Current__Initial;
     }
     public virtual void BeFixed(float FIX) {
         this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial += FIX;
     }
+    bool Item_Held_Handler.IsUseUp => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial <= 0;
     public virtual bool DeathCheck() {
         if (this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial <= 0.0f) {
             return true;
         }
         return false;
     }
-    int Item_Held_Handler.Getheld() {
-        return this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial;
-    }
+
     public virtual float GetHPrate() {
         return this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
     }
@@ -1142,21 +858,61 @@ public abstract class Values_Handle_Layer_Base : Item_INFO_Handler
             return num;
         }
     }
-
+    void Item_Held_Handler.SetMax(int max) {
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial = max;
+    }
+    void Item_Held_Handler.SetHeld(int num) {
+        if (0 <= num && num <= this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial) {
+            this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = num;
+        }
+        else if (num < 0) {
+            this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = 0;
+        }
+        else {
+            this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial;
+        }
+    }
     void Item_Trigger_Handler.Trigger_Binded(Action action) {
         if (this.Binded) {
-            if (!this.trigger_Group.Trigger_Binded) {
+            if (!this.INFO_Handle_Temp.Trigger_Group.Trigger_Binded) {
                 action.Invoke();
-                this.trigger_Group.Trigger_Binded = true;
+                this.INFO_Handle_Temp.Trigger_Group.Trigger_Binded = true;
             }
         }
     }
     void Item_Trigger_Handler.Trigger_Display(Action action) {
         if (this.Binded) {
-            if (!this.trigger_Group.Trigger_Display) {
+            if (!this.INFO_Handle_Temp.Trigger_Group.Trigger_Display) {
                 action.Invoke();
-                this.trigger_Group.Trigger_Display = true;
+                this.INFO_Handle_Temp.Trigger_Group.Trigger_Display = true;
             }
+        }
+    }
+    #endregion
+    #region UI
+    ItemStaticProperties.ItemStaticGraphs Item_UI_Handler.Graph => this.Item_Property.ItemStaticProperties.ItemStaticGraphs;
+    Vector3 Item_UI_Handler.Center
+    {
+        get {
+            Vector3 temp = new Vector3();
+            if (this.Instance) {
+                Transform tmp = this.Instance.transform.Find("Graph");
+                if (tmp != null) {
+                    temp = tmp.position;
+                }
+                else {
+                    tmp = this.Instance.transform.Find("Point");
+                    temp = tmp.position;
+                }
+            }
+            return temp;
+        }
+    }
+    Vector2 Item_UI_Handler.CenterInScreen
+    {
+        get {
+            Vector3 temp = Camera.main.WorldToScreenPoint(((Item_UI_Handler)this).Center, Camera.MonoOrStereoscopicEye.Mono);
+            return new Vector2(temp.x, temp.y);
         }
     }
     #endregion
@@ -1167,7 +923,7 @@ public abstract class Values_Handle_Layer_Base : Item_INFO_Handler
 
     #region Object
 
-    GameObject Item_Object_Handler.Instance => InstanceObj;
+    public GameObject Instance => InstanceObj;
     bool Item_Object_Handler.IsHeld => BeHelding;
     bool Item_Object_Handler.IsInstanced => Instanced;
 
@@ -1265,17 +1021,7 @@ public abstract class Values_Handle_Layer_Base : Item_INFO_Handler
         }
     }
 
-    public void Destory() {
-        if (Instanced && InstanceObj) {
-            GameObject.Destroy(InstanceObj);
-            Instanced = false;
-            BeHelding = false;
-        }
-        else if (Instanced && !InstanceObj) {
-            Instanced = false;
-            BeHelding = false;
-        }
-    }
+
     public void AddItemComponent(Item item) {
         if (item != Items.Empty) {
             if (InstanceObj.TryGetComponent<ItemOnTheGround>(out ItemOnTheGround itemOnTheGround)) {
@@ -1293,11 +1039,7 @@ public abstract class Values_Handle_Layer_Base : Item_INFO_Handler
     #region Logic
     #endregion
 }
-public class Trigger_Group {
-    public bool Trigger_Binded = false;
-    public bool Trigger_Display = false;
 
-}
 
 
 
@@ -1316,13 +1058,29 @@ public class Item_Property {
         this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties,itemPreInstanceProperties);
     }
     public Item_Property(ItemRuntimeProperties.ItemRuntimeProperties itemRuntimeProperties) {
+        if(itemRuntimeProperties.Detail_Type== RuntimeProperty_Detail_Type.None) {
+            this.ItemRuntimeProperties = itemRuntimeProperties;
+            this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties;
+        }
+        else if(itemRuntimeProperties.Detail_Type== RuntimeProperty_Detail_Type.Default) {
+            this.ItemStaticProperties = StaticPath.ItemLoad[itemRuntimeProperties.ItemType, itemRuntimeProperties.ItemID].ItemStaticProperties;
+            this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
+        }
+        /*
         this.ItemRuntimeProperties = itemRuntimeProperties;
-        this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties; 
+        this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties;
+        */
+        this.ItemRuntimeProperties.ItemRuntimeTemps = new ItemRuntimeProperties.ItemRuntimeTemps();
     }
 
 }
 
-
+public enum RuntimeProperty_Detail_Type
+{
+    None,
+    Default,
+    PreInstance,
+}
 namespace ItemRuntimeProperties
 {
     
@@ -1360,6 +1118,7 @@ namespace ItemRuntimeProperties
             public int Size__Initial = 1;
         }
     }
+    
     public class ItemRuntimeTemps {
         public RuntimeTemps.RuntimeTemps_Bool RuntimeTemps_Bool = new RuntimeTemps.RuntimeTemps_Bool();
         public RuntimeTemps.RuntimeTemps_Action RuntimeTemps_Action = new RuntimeTemps.RuntimeTemps_Action();
@@ -1380,11 +1139,16 @@ namespace ItemRuntimeProperties
         }
     
     }
+
+  
+
     [Serializable]
     public class ItemRuntimeProperties
     {
         public ItemType ItemType = ItemType.Empty;
         public int ItemID = 0;
+        public RuntimeProperty_Detail_Type Detail_Type = RuntimeProperty_Detail_Type.None;
+        [HideInInspector]
         public bool Inited = false;
         public ItemStaticProperties.GetWays GetWays__Initial = ItemStaticProperties.GetWays.Hand;
         public DeathTrigger deathTrigger = DeathTrigger.UnDeath;
@@ -1471,7 +1235,6 @@ namespace ItemStaticProperties
     }
     public enum NumDisplayWays {
         DisplayHeld,
-        DisplayContentHled,
         NoDisplay,
     }
     [Serializable]

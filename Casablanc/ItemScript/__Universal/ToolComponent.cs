@@ -34,7 +34,7 @@ public static class ToolComponent
     }
 
     public static void RotateLock(Item item) {
-        ((Item)item).GetItemInstanceTransform().GetComponent<Rigidbody>().constraints =
+        ((Item_Detail)item).Info_Handler.Instance.GetComponent<Rigidbody>().constraints =
              RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
     }
 

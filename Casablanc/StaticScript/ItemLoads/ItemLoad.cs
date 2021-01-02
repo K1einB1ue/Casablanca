@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-[CreateAssetMenu(fileName ="物品静态加载",menuName ="静态加载/物品静态加载包")]
 public class ItemLoad :ScriptableObject
 {
     [SerializeField]
@@ -13,17 +12,44 @@ public class ItemLoad :ScriptableObject
 
     [HideInInspector]
     public Dictionary<KeyValuePair<ItemType, int>, ItemStore> ItemStatics;
-
+    [HideInInspector]
     public bool initital = false;
 
-    private void Awake() {
+    private void OnEnable() {
         initital = false;
+        ItemStatics = new Dictionary<KeyValuePair<ItemType, int>, ItemStore>();
+        foreach (var item in itemlist) {
+            if (item != null) {
+                KeyValuePair<ItemType, int> key;
+
+                key = new KeyValuePair<ItemType, int>(item.ItemStaticProperties.ItemType, item.ItemStaticProperties.ItemID);
+
+                if (ItemStatics.TryGetValue(key, out var itemStore)) {
+                    Debug.LogError("物品静态加载有重复物品!请检查!");
+                }
+                else {
+                    ItemStatics[key] = item;
+                }
+            }
+        }
     }
-
-
-
-
-
+    public ItemStore this[ItemType Type, int ID] {
+        get {
+            KeyValuePair<ItemType, int> key = new KeyValuePair<ItemType, int>(Type, ID);
+            if (ItemStatics.TryGetValue(key, out var itemStore)) {
+                return itemStore;
+            }
+            else {
+                Debug.LogError("错误的物品请求");
+                return null;
+            }
+        }
+    }
+        
+        
+        
+        
+    /*
     public ItemStore this[ItemType Type, int ID]
     {
         get {
@@ -64,6 +90,6 @@ public class ItemLoad :ScriptableObject
         }
 
 
-    }
+    }*/
 
 }

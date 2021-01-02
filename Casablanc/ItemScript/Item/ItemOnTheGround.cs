@@ -13,25 +13,23 @@ public class ItemOnTheGround : MonoBehaviour
     public Item itemOntheGround;
     //[SerializeField]
     //private ItemSceneStore Store;
-
     public Instance_Type Instance_Type = Instance_Type.Single;
     public Info_Type Info_Type = Info_Type.Properties;
 
     [SerializeField]
-    public ItemInfoStore ItemInfoStore;
+    private ItemInfoStore ItemInfoStore;
     [SerializeField]
-    public int ItemID = -1;
+    private int ItemID = -1;
     [SerializeField]
-    public ItemType ItemType = ItemType.Error;
+    private ItemType ItemType = ItemType.Error;
 
     [SerializeField]
-    private ItemPreInstanceProperties.ItemPreInstanceProperties ItemPreInstanceProperties = new ItemPreInstanceProperties.ItemPreInstanceProperties(); 
+    private ItemPreInstanceProperties.ItemPreInstanceProperties ItemPreInstanceProperties = new ItemPreInstanceProperties.ItemPreInstanceProperties();
 
+    [SerializeField]
+    private List<ItemNodeDynamic> Cotent = new List<ItemNodeDynamic>(); 
     
 
-
-
-    [SerializeField]
     public int MultiCount = 0;
 
     [SerializeField]
@@ -56,42 +54,44 @@ public class ItemOnTheGround : MonoBehaviour
             for(int i=0;i< MultiCount; i++) {
                 //materialPack.materials.Add(this.transform.Find("Graph" + i.ToString()).GetComponent<Renderer>().material);
             }
-        }
-
-
-
-
-        
+        }   
     }
+
+
+
     private void OnEnable() {
         if (this.InitInScene) {
-            if (this.Info_Type == Info_Type.ItemInfoStore) {
-                itemOntheGround = (Item)this.ItemInfoStore.GetNonSaveContainer();
-                this.ItemType = this.itemOntheGround.TypeGet();
-                this.ItemID = this.itemOntheGround.IDGet();
-                this.itemOntheGround.InstancedOnTheGround(this.gameObject);
-                if (((ItemLogic)this.itemOntheGround).IsContainer()) {
+            if (this.Info_Type == Info_Type.InfoStore) {
+                itemOntheGround = this.ItemInfoStore.GetNonSaveContainer();
+                this.ItemType = this.itemOntheGround.Type;
+                this.ItemID = this.itemOntheGround.ID;
+                if (this.itemOntheGround.IsContainer) {
                     ((Container)this.itemOntheGround).UpdateDisplay();
                 }
             }
             else if(this.Info_Type ==Info_Type.Properties) {
                 this.itemOntheGround = Items.GetItemByItemTypeAndItemID_With_StaticProperties_And_PreInstanceProperties(this.ItemType, this.ItemID, this.ItemPreInstanceProperties);
-                this.ItemType = itemOntheGround.TypeGet();
-                this.ItemID = itemOntheGround.IDGet();
-                this.itemOntheGround.InstancedOnTheGround(this.gameObject);         
+                if (this.Cotent.Count > 0) {
+                    for(int i=0;i< Cotent.Count; i++) {
+                        if (Items.GetIsContainerByItemTypeAndItemID(Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID)) {
+                            ((ScriptContainer)this.itemOntheGround).SetItem(i, Cotent[i].GetContainer());
+                        }
+                        else {
+                            ((ScriptContainer)this.itemOntheGround).SetItem(i, Cotent[i].GetItem());
+                        }
+                    }
+                }
             }
+            this.itemOntheGround.Info_Handler.ReplaceInstance(this.gameObject);
             this.TypeIDGive = true;
         }   
     }
 
+
+
     private void Update() {
         if (itemOntheGround != null) {
             itemOntheGround.update();
-            if (!TypeIDGive) {
-                this.ItemType = itemOntheGround.TypeGet();
-                this.ItemID = itemOntheGround.IDGet();
-                this.TypeIDGive = true;
-            }
         }
         if (Instance_Type != Instance_Type.Muilti) {
             materialPack.Update(this.itemOntheGround, this.selected);
@@ -115,7 +115,7 @@ public enum Instance_Type {
     Muilti,
 }
 public enum Info_Type {
-    ItemInfoStore,
+    InfoStore,
     Properties,
 }
 [CustomEditor(typeof(ItemOnTheGround))]
@@ -129,6 +129,7 @@ public class ItemOnTheGroundEditor : Editor
     SerializedProperty ItemPreInstanceProperties;
     SerializedProperty MultiCount;
     SerializedProperty InitInScene;
+    SerializedProperty Cotent;
     public override void OnInspectorGUI() {
         serializedObject.Update();
         ItemOnTheGround item = target as ItemOnTheGround;
@@ -141,6 +142,7 @@ public class ItemOnTheGroundEditor : Editor
         ItemInfoStore = serializedObject.FindProperty("ItemInfoStore");
         ItemPreInstanceProperties = serializedObject.FindProperty("ItemPreInstanceProperties");
         MultiCount = serializedObject.FindProperty("MultiCount");
+        Cotent = serializedObject.FindProperty("Cotent");
 
         //base.OnInspectorGUI();
         EditorGUI.BeginChangeCheck();
@@ -149,59 +151,63 @@ public class ItemOnTheGroundEditor : Editor
 
 
 
-        if (item.Info_Type== global::Info_Type.ItemInfoStore) {
+        if (item.Info_Type== global::Info_Type.InfoStore) {
             EditorGUILayout.PropertyField(ItemInfoStore);
         }
         else if (item.Info_Type == global::Info_Type.Properties) {
             EditorGUILayout.PropertyField(ItemType);
             EditorGUILayout.PropertyField(ItemID);
             EditorGUILayout.PropertyField(ItemPreInstanceProperties);
+            EditorGUILayout.PropertyField(Cotent);
         }
 
         if (item.Instance_Type == global::Instance_Type.Muilti) {
             EditorGUILayout.PropertyField(MultiCount);
             if (GUILayout.Button("生成子物体", GUILayout.Width(200))) {
-                List<int> vs = new List<int>();
-                List<GameObject> Ls = new List<GameObject>(); 
-                foreach (var Tran in FindEx.Find(item.transform, (str) => { return str.Contains("Graph"); })) {
-                    Ls.Add(Tran.gameObject);
-                }
-                for (int i = 0; i < Ls.Count; i++) {
-                    int temp = int.Parse(Ls[i].name.Replace("Graph", ""));
-                    if (temp >= item.MultiCount) {
-                        GameObject.DestroyImmediate(Ls[i]);
-                    }
-                    else {
-                        if (Ls[i].TryGetComponent<ItemLeader>(out var itemLeader)) {
-                            if (itemLeader.Target != item.gameObject) {
-                                Debug.LogWarning("ItemLeader的Target出现了非母物品的状态 请确认.");
-                            }
-                        }
-                        else {
-                            ItemLeader leader = Ls[i].AddComponent<ItemLeader>();
-                            leader.Target = item.gameObject;
-                            Debug.LogWarning("为Graph" + i.ToString() + "添加了Itemleader");
-                        }
-                        vs.Add(temp);
-                    }
-                }
-                for (int i = 0; i < item.MultiCount; i++) {
-                    if (!vs.Contains(i)) {
-                        GameObject gameObject = new GameObject();
-                        gameObject.transform.parent = item.transform;
-                        gameObject.transform.position = item.transform.position;
-                        gameObject.name = "Graph" + i.ToString();
-                        ItemLeader leader = gameObject.AddComponent<ItemLeader>();
-                        leader.Target = item.gameObject;
-                        Debug.LogWarning("为Graph" + i.ToString() + "添加了Itemleader");
-                    }
-                }
+                this.MultiAdjustment(item);
             }
         }
         EditorGUILayout.PropertyField(InitInScene);
 
         if (EditorGUI.EndChangeCheck()) {
             serializedObject.ApplyModifiedProperties();
+        }
+    }
+    private void MultiAdjustment(ItemOnTheGround item) {
+        List<int> vs = new List<int>();
+        List<GameObject> Ls = new List<GameObject>();
+        foreach (var Tran in FindEx.Find(item.transform, (str) => { return str.Contains("Graph"); })) {
+            Ls.Add(Tran.gameObject);
+        }
+        for (int i = 0; i < Ls.Count; i++) {
+            int temp = int.Parse(Ls[i].name.Replace("Graph", ""));
+            if (temp >= item.MultiCount) {
+                GameObject.DestroyImmediate(Ls[i]);
+            }
+            else {
+                if (Ls[i].TryGetComponent<ItemLeader>(out var itemLeader)) {
+                    if (itemLeader.Target != item.gameObject) {
+                        Debug.LogWarning("ItemLeader的Target出现了非母物品的状态 请确认.");
+                    }
+                }
+                else {
+                    ItemLeader leader = Ls[i].AddComponent<ItemLeader>();
+                    leader.Target = item.gameObject;
+                    Debug.LogWarning("为Graph" + i.ToString() + "添加了Itemleader");
+                }
+                vs.Add(temp);
+            }
+        }
+        for (int i = 0; i < item.MultiCount; i++) {
+            if (!vs.Contains(i)) {
+                GameObject gameObject = new GameObject();
+                gameObject.transform.parent = item.transform;
+                gameObject.transform.position = item.transform.position;
+                gameObject.name = "Graph" + i.ToString();
+                ItemLeader leader = gameObject.AddComponent<ItemLeader>();
+                leader.Target = item.gameObject;
+                Debug.LogWarning("为Graph" + i.ToString() + "添加了Itemleader");
+            }
         }
     }
 
@@ -215,8 +221,8 @@ public class MaterialPack
 
     public void Update(Item itemOntheGround,bool selected) {
         for(int i = 0; i < materials.Count; i++) {
-            materials[i].SetFloat("CantGet", ((Item_Detail)itemOntheGround).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial == ItemStaticProperties.GetWays.Hand ? 0 : 1);
-            materials[i].SetFloat("Rate", 1.0f - ((ItemUI)itemOntheGround).GetItemHPrate());
+            materials[i].SetFloat("CantGet", (itemOntheGround).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial == ItemStaticProperties.GetWays.Hand ? 0 : 1);
+            materials[i].SetFloat("Rate", 1.0f - itemOntheGround.Item_UI_Handler.GetHPrate());
             if (KeyPress.P || selected) {
                 materials[i].SetFloat("Boolean_590330D2", 1.0f);
             }

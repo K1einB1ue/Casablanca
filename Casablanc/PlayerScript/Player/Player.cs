@@ -328,8 +328,8 @@ public abstract class CharacterStatic : Player,ValuePlayer,UIPlayer, PlayerManag
     }
     void Player._DropThrewpre(Vector3 dir) {
         if (!object.Equals(Held, Items.Empty)) {
-            Held.Drop(Held.GetItemInstanceTransform().position);
-            Held.GetItemInstanceTransform().GetComponent<Rigidbody>().AddForce(dir);
+            Held.Drop(Held.Instance.transform.position);
+            Held.Instance.GetComponent<Rigidbody>().AddForce(dir);
             ((Item_Detail)Held).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
             ((Container)((Player)this).GetStaticBag()).DelItem(Held);
             Held = Items.Empty;

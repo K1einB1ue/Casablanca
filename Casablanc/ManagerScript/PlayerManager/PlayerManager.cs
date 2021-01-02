@@ -147,6 +147,6 @@ public class PlayerManager : SingletonMono<PlayerManager>
 
 
     public static bool MainPlayerHeldTypeBool(ItemType itemType) {
-        return Main.Held.TypeGet() == itemType;
+        return Main.Held.Type == itemType;
     }   
 }

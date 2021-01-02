@@ -27,7 +27,7 @@ public abstract class SingletonMono<T> : MonoBehaviour where T : SingletonMono<T
             Instance = _instance;
 
 
-            RunTimeInit.EnableMap.Add(Instance.GetType().BaseType.ToString(), true);
+            StaticRun.EnableMap.Add(Instance.GetType().BaseType.ToString(), true);
         }
     }  
 }  

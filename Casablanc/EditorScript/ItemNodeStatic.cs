@@ -15,9 +15,11 @@ public class ItemNodeStatic : ScriptableObject, ItemNode
 
     public List<ItemNodeStatic> ItemContain;
 
+   
 
     public Item GetItem() {
         Item item;
+        //获取类
         if (this.ItemStaticInfoPackage.itemStaticDescribeWays == ItemStaticDescribeWays.ItemStroe) {
             item = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemID);
         }
@@ -27,8 +29,8 @@ public class ItemNodeStatic : ScriptableObject, ItemNode
         else {
             item = Items.Empty;
         }
-        
 
+        //对类值进行初始化工作
         if (this.ItemStaticInfoPackage.itemStaticDescribeWays== ItemStaticDescribeWays.ItemStroe) {
             ((Item_Detail)item).Info_Handler.Binding(new Item_Property(this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemID, this.ItemPreInstanceInfoPackage.ItemPreInstanceProperties));
         }
@@ -36,6 +38,8 @@ public class ItemNodeStatic : ScriptableObject, ItemNode
             ((Item_Detail)item).Info_Handler.Binding(new Item_Property(this.ItemStaticInfoPackage.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStaticProperties.ItemID, this.ItemPreInstanceInfoPackage.ItemPreInstanceProperties));
         }
 
+
+        //对类实例个体进行深入初始化工作
         /*预计会有个物品原型初始化*/
 
 
@@ -88,7 +92,7 @@ public class ItemNodeDynamic: ItemNode
     public Item GetItem() {
         Item item = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID);
 
-        ((Item_Detail)item).Info_Handler.Binding(new Item_Property(this.ItemRuntimeInfoPackage.ItemRuntimeProperties));
+        item.Info_Handler.Binding(new Item_Property(this.ItemRuntimeInfoPackage.ItemRuntimeProperties));
         return item;
     }
     public Item GetContainer() {
@@ -109,6 +113,50 @@ public class ItemNodeDynamic: ItemNode
     }
 
 }
+
+public enum ItemStaticDescribeWays
+{
+    ItemStroe,
+    ItemTypeAndID,
+    ItemDetailStore,
+    ItemDetailPack,
+
+}
+
+[Serializable]
+public class ItemStaticInfoPackage
+{
+    public ItemStaticDescribeWays itemStaticDescribeWays = ItemStaticDescribeWays.ItemStroe;
+    public ItemStore ItemStore;
+    public ItemStaticProperties.ItemStaticProperties ItemStaticProperties;
+
+    public ItemStaticProperties.ItemStaticProperties GetItemStaticProperty() {
+        if (this.itemStaticDescribeWays == ItemStaticDescribeWays.ItemStroe) {
+            return StaticPath.ItemLoad[this.ItemStore.ItemStaticProperties.ItemType, this.ItemStore.ItemStaticProperties.ItemID].ItemStaticProperties;
+        }
+        if (this.itemStaticDescribeWays == ItemStaticDescribeWays.ItemTypeAndID) {
+            return this.ItemStaticProperties;
+        }
+        return null;
+    }
+}
+[Serializable]
+public class ItemRuntimeInfoPackage
+{
+
+    public ItemRuntimeProperties.ItemRuntimeProperties ItemRuntimeProperties;
+
+    public ItemRuntimeInfoPackage(Item item) {
+        ItemRuntimeProperties = item.GetItemProperty().ItemRuntimeProperties;
+    }
+}
+[Serializable]
+public class ItemPreInstanceInfoPackage
+{
+    public ItemPreInstanceType ItemPreInstanceType = ItemPreInstanceType.Standard;
+    public ItemPreInstanceProperties.ItemPreInstanceProperties ItemPreInstanceProperties = new ItemPreInstanceProperties.ItemPreInstanceProperties();
+}
+
 
 
 

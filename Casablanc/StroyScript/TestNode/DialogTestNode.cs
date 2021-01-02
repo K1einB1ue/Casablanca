@@ -13,7 +13,7 @@ public class DialogTestNode : NodeStatic
             if (Port.ConnectionCount > 0) {             
                 if (Port.Connection.node.GetType() == typeof(DialogNode)) {
                     trigger = true;
-                    StaticPath.StoryInfoDialogInfo.CurrentDialog = (DialogNode)Port.Connection.node;
+                    StaticPath.Story_DialogInfo.CurrentDialog = (DialogNode)Port.Connection.node;
                 }
                 else {
                     Debug.LogWarning("请连接正确的DialogNode");

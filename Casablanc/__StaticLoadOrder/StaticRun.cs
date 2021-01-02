@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class RunTimeInit
+public sealed class StaticRun
 {
     public static Dictionary<string, bool> EnableMap = new Dictionary<string, bool>();
 

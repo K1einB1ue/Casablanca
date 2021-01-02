@@ -78,13 +78,13 @@ public static class UIS
                 this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").gameObject.SetActive(((ItemUI)((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i]).Displaycount());
                 this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").GetComponent<Text>().text = ((ItemUI)((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i]).GetUIheld().ToString();
                 if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i] != null) {
-                    if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].GetSprite() == null) {
+                    if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid == null) {
                         this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().color = new Color(1, 1, 1, 0);
                     }
                     else {
                         this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().color = new Color(1, 1, 1, 1);
-                        if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].GetSprite() != null) {
-                            this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].GetSprite();
+                        if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid != null) {
+                            this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
                         }
                     }
                 }
@@ -154,7 +154,7 @@ public static class UIS
                     if (i == 0) {
                         if (((Gun)PlayerManager.Main.Held).magazine != Items.Empty) {
                             this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(true);
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Gun)PlayerManager.Main.Held).magazine.GetSprite();
+                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Gun)PlayerManager.Main.Held).magazine.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
                             this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)((Gun)PlayerManager.Main.Held).magazine).GetBulletRate();
                         }
                         else {
@@ -162,7 +162,7 @@ public static class UIS
                         }
                     }
                     else {
-                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = Magazines[i - 1].GetSprite();
+                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = Magazines[i - 1].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
                         this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)Magazines[i - 1]).GetBulletRate();
                     }
                 }
@@ -223,12 +223,10 @@ public static class UIS
         }
 
         public void DrawFrame() {
-            this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = ((ItemGraph)PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround).GetCenterInScreen();
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.GetSprite();
+            this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.Item_UI_Handler.CenterInScreen;
+            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
 
             this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("物品名").GetComponent<Text>().text = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.GetType().ToString();
-            //this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("Type").GetComponent<Text>().text = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.TypeGet().ToString();
-            //this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("ID").GetComponent<Text>().text = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.IDGet().ToString();
             this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("描述").GetComponent<Text>().text = ((ItemUI)PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround).GetItemIntro().GetString();
         }
     }
@@ -248,7 +246,7 @@ public class DebugWindow : UIStatic
         if (UpdateCount == CountDisplay) {
             stringBuilder.Append(item.GetType().ToString());
             stringBuilder.Append('\n');
-            if (((ItemLogic)item).IsContainer() && item != Items.Empty) {
+            if (item.IsContainer && item != Items.Empty) {
                 for (int i = 0; i < item.GetContainerState().size; i++) {
                     ItemContainInfo(item.GetContainerState().Contents[i]);
                 }
