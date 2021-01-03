@@ -11,8 +11,7 @@ using UnityEditor;
 public class ItemOnTheGround : MonoBehaviour
 {
     public Item itemOntheGround;
-    //[SerializeField]
-    //private ItemSceneStore Store;
+
     public Instance_Type Instance_Type = Instance_Type.Single;
     public Info_Type Info_Type = Info_Type.Properties;
 
@@ -34,6 +33,7 @@ public class ItemOnTheGround : MonoBehaviour
 
     [SerializeField]
     private bool InitInScene = false;
+
     private bool TypeIDGive =false;
 
 
@@ -108,8 +108,17 @@ public class ItemOnTheGround : MonoBehaviour
     }
 
 }
-
-
+public class Force_Info
+{
+    public bool Rigid_AdjustMent = false;
+    public RigidBody_Type SceneDetail_RigidBody = RigidBody_Type.ForcetoNone;
+}
+public enum RigidBody_Type
+{
+    UseDefault,
+    ForcetoHave,
+    ForcetoNone
+}
 public enum Instance_Type {
     Single,
     Muilti,

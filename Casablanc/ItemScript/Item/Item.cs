@@ -159,7 +159,7 @@ public static class Items
             KeyValuePair<ItemType, int> Key = new KeyValuePair<ItemType, int>(itemType, ItemID);
             if (Generators.TryGetValue(Key, out Func<Item> Func)) {
                 Item tmp=Func();
-                ((Item_Detail)tmp).Info_Handler.Binding(new Item_Property(itemType, ItemID, itemPreInstanceProperties));
+                tmp.Info_Handler.Binding(new Item_Property(itemType, ItemID, itemPreInstanceProperties));
                 return tmp;
             }
         }
@@ -686,7 +686,8 @@ public class ItemIntro
 
 public interface Item_INFO_Handler : 
     Item_UI_Handler, Item_Logic_Handler, Item_Values_Handler,Item_Held_Handler,
-    Item_Trigger_Handler, Item_Object_Handler, Item_Size_Handler, Item_synchronization_Handler
+    Item_Trigger_Handler, Item_Object_Handler, Item_Size_Handler, Item_synchronization_Handler, 
+    Item_Rigid_Handler
 {
     Item_Property Item_Property { get; set; }
     bool Binded { get; }
@@ -698,7 +699,9 @@ public interface Item_INFO_Handler :
 
 public interface Item_synchronization_Handler {
     public void Setsynchronization_BeforeInstance(Action action);
-
+}
+public interface Item_Rigid_Handler
+{
 
 }
 
@@ -782,6 +785,38 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
 
 
 
+
+    public virtual void OnBinded() {
+        RigidBody_Init();
+    }
+
+    private void RigidBody_Init() {
+        if (this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody) {
+            if (this.Instance) {
+                this.Instance.AddComponent<Rigidbody>();
+            }
+        }
+        else {
+            if (this.Instance) {
+                if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+                    GameObject.Destroy(rigidbody);
+                }
+            }
+        }
+    }
+    private void RigidBody_Apply() {
+        if(!this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+            this.Instance.AddComponent<Rigidbody>();
+        }
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = true;
+    }
+    private void RigidBody_Remove() {
+        if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+            GameObject.Destroy(rigidbody);         
+        }
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = false;
+    }
+
     #region INFO
     void Item_INFO_Handler.Binding(Item_Property Bingding) {
         this.item_Property = Bingding;
@@ -827,9 +862,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         return false;
     }
 
-    public virtual float GetHPrate() {
-        return this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
-    }
+    
     /// <summary>
     /// 返回剩余数量
     /// </summary>
@@ -876,6 +909,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         if (this.Binded) {
             if (!this.INFO_Handle_Temp.Trigger_Group.Trigger_Binded) {
                 action.Invoke();
+                OnBinded();
                 this.INFO_Handle_Temp.Trigger_Group.Trigger_Binded = true;
             }
         }
@@ -891,6 +925,9 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     #endregion
     #region UI
     ItemStaticProperties.ItemStaticGraphs Item_UI_Handler.Graph => this.Item_Property.ItemStaticProperties.ItemStaticGraphs;
+    public virtual float GetHPrate() {
+        return this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
+    }
     Vector3 Item_UI_Handler.Center
     {
         get {
@@ -944,12 +981,15 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 ParTrans = transform;
                 InstanceObj = GameObject.Instantiate(Origin, transform, false);
                 Sys_BeforeInstance?.Invoke();
+                this.RigidBody_Remove();
+                /*
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
                     rigidbody.constraints = RigidbodyConstraints.FreezeAll;
                     rigidbody.isKinematic = false;
                     rigidbody.useGravity = false;
                     rigidbody.freezeRotation = true;
                 }
+                */
                 InstanceObj.layer = 8;
             }
         }
@@ -961,6 +1001,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 BeHelding = false;
                 InstanceObj = GameObject.Instantiate(Origin, vector3, new Quaternion());
                 Sys_BeforeInstance?.Invoke();
+                this.RigidBody_Apply();
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
                     rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = false;
@@ -978,6 +1019,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 BeHelding = false;
                 InstanceObj = GameObject.Instantiate(Origin, vector3, new Quaternion());
                 Sys_BeforeInstance?.Invoke();
+                this.RigidBody_Apply();
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
                     rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = false;
@@ -991,6 +1033,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 if (InstanceObj) {
                     InstanceObj.transform.parent = null;
                 }
+                this.RigidBody_Apply();
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
                     rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = false;
@@ -1008,14 +1051,16 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 Instanced = true;
                 BeHelding = true;
                 ParTrans = transform;
-                InstanceObj = GameObject.Instantiate(Origin, transform, false);
+                InstanceObj = GameObject.Instantiate(Origin, transform, false);         
                 Sys_BeforeInstance?.Invoke();
+                RigidBody_Remove();
+                /*
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
                     rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = true;
                     rigidbody.useGravity = true;
                     rigidbody.freezeRotation = false;
-                }
+                }*/
                 InstanceObj.gameObject.layer = 8;
             }
         }
@@ -1055,6 +1100,7 @@ public class Item_Property {
     public Item_Property() { }
     public Item_Property(ItemType ItemType,int ItemID, ItemPreInstanceProperties.ItemPreInstanceProperties itemPreInstanceProperties) {
         this.ItemStaticProperties = StaticPath.ItemLoad[ItemType, ItemID].ItemStaticProperties;
+
         this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties,itemPreInstanceProperties);
     }
     public Item_Property(ItemRuntimeProperties.ItemRuntimeProperties itemRuntimeProperties) {
@@ -1066,10 +1112,6 @@ public class Item_Property {
             this.ItemStaticProperties = StaticPath.ItemLoad[itemRuntimeProperties.ItemType, itemRuntimeProperties.ItemID].ItemStaticProperties;
             this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
         }
-        /*
-        this.ItemRuntimeProperties = itemRuntimeProperties;
-        this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties;
-        */
         this.ItemRuntimeProperties.ItemRuntimeTemps = new ItemRuntimeProperties.ItemRuntimeTemps();
     }
 
@@ -1097,6 +1139,7 @@ namespace ItemRuntimeProperties
         public RuntimeValues.RuntimeValues_State RuntimeValues_State = new RuntimeValues.RuntimeValues_State();
         public RuntimeValues.RuntimeValues_Held RuntimeValues_Held = new RuntimeValues.RuntimeValues_Held();
         public RuntimeValues.RuntimeValues_Size RuntimeValues_Size = new RuntimeValues.RuntimeValues_Size();
+        public RuntimeValues.RuntimeValues_Rigid RuntimeValues_Rigid = new RuntimeValues.RuntimeValues_Rigid();
     }
     namespace RuntimeValues
     {
@@ -1117,6 +1160,11 @@ namespace ItemRuntimeProperties
         public class RuntimeValues_Size {
             public int Size__Initial = 1;
         }
+        [Serializable]
+        public class RuntimeValues_Rigid
+        {
+            public bool HaveRigidBody = true;
+        }
     }
     
     public class ItemRuntimeTemps {
@@ -1128,6 +1176,7 @@ namespace ItemRuntimeProperties
         public class RuntimeTemps_Bool {
             public bool Instanced = false;
             public bool BeHeld = false;
+            
         }
         public class RuntimeTemps_Action {
             public Action synchronization_beforeInstance;
@@ -1177,6 +1226,21 @@ namespace ItemRuntimeProperties
                 RuntimeValues.RuntimeValues_Size Init_Size = this.ItemRuntimeValues.RuntimeValues_Size;
                 ItemStaticProperties.StaticValues.StaticValues_Size staticValues_Size = itemStaticProperties.ItemStaticValues.StaticValues_Size;
                 Init_Size.Size__Initial = staticValues_Size.Size_Origin;
+
+                RuntimeValues.RuntimeValues_Rigid Init_Rigid = this.ItemRuntimeValues.RuntimeValues_Rigid;
+                ItemStaticProperties.StaticValues.StaticValues_Rigid staticValues_Rigid = itemStaticProperties.ItemStaticValues.StaticValues_Rigid;
+                if (itemPreInstanceProperties == null) {
+                    Init_Rigid.HaveRigidBody = staticValues_Rigid.HaveRigidBody;
+                }
+                else if (itemPreInstanceProperties.RigidbodyWays == ItemPreInstanceProperties.RigidbodyWays.Default) {                                  
+                    Init_Rigid.HaveRigidBody = staticValues_Rigid.HaveRigidBody;
+                }else if(itemPreInstanceProperties.RigidbodyWays== ItemPreInstanceProperties.RigidbodyWays.ForceNon) {
+                    Init_Rigid.HaveRigidBody = false;
+                }
+                else if(itemPreInstanceProperties.RigidbodyWays== ItemPreInstanceProperties.RigidbodyWays.ForceUse) {
+                    Init_Rigid.HaveRigidBody = true;
+                }
+
 
 
             }
@@ -1251,6 +1315,7 @@ namespace ItemStaticProperties
         public StaticValues.StaticValues_State StaticValues_State = new StaticValues.StaticValues_State();
         public StaticValues.StaticValues_Held StaticValues_Held = new StaticValues.StaticValues_Held();
         public StaticValues.StaticValues_Size StaticValues_Size = new StaticValues.StaticValues_Size();
+        public StaticValues.StaticValues_Rigid StaticValues_Rigid = new StaticValues.StaticValues_Rigid();
     }
     namespace StaticValues
     {
@@ -1271,6 +1336,11 @@ namespace ItemStaticProperties
         [Serializable]
         public class StaticValues_Size {
             public int Size_Origin = 1;
+        }
+        [Serializable]
+        public class StaticValues_Rigid
+        {
+            public bool HaveRigidBody = true;
         }
     }
     [Serializable]
@@ -1316,7 +1386,12 @@ public enum ItemPreInstanceType {
 
 namespace ItemPreInstanceProperties 
 {
-
+    public enum RigidbodyWays
+    {
+        Default,
+        ForceUse,
+        ForceNon,
+    }
     public enum InstanceWays {
         SummonAnyWay,
         SummonInARate,
@@ -1327,6 +1402,7 @@ namespace ItemPreInstanceProperties
     public class ItemPreInstanceProperties
     {
         public InstanceWays InstanceWays = InstanceWays.SummonAnyWay;
+        public RigidbodyWays RigidbodyWays = RigidbodyWays.Default;
     }
 }
 
