@@ -12,11 +12,9 @@ public class ItemLoad :ScriptableObject
 
     [HideInInspector]
     public Dictionary<KeyValuePair<ItemType, int>, ItemStore> ItemStatics;
-    [HideInInspector]
-    public bool initital = false;
+
 
     private void OnEnable() {
-        initital = false;
         ItemStatics = new Dictionary<KeyValuePair<ItemType, int>, ItemStore>();
         foreach (var item in itemlist) {
             if (item != null) {
@@ -45,51 +43,4 @@ public class ItemLoad :ScriptableObject
             }
         }
     }
-        
-        
-        
-        
-    /*
-    public ItemStore this[ItemType Type, int ID]
-    {
-        get {
-            if (!this.initital) {
-                this.initital = true;
-                try {
-                    ItemStatics = new Dictionary<KeyValuePair<ItemType, int>, ItemStore>();
-
-                    for (int i = 0; i < itemlist.Count; i++) {
-                        if (itemlist[i] != null) {
-                            KeyValuePair<ItemType, int> Pair = new KeyValuePair<ItemType, int>(itemlist[i].ItemStaticProperties.ItemType, itemlist[i].ItemStaticProperties.ItemID);
-                            if (ItemStatics.TryGetValue(Pair, out ItemStore item)) {
-                                Debug.LogError(itemlist[i].name + "与" + itemlist[i].name + "物品冲突!");
-                            }
-                            else {
-                                ItemStatics.Add(Pair, itemlist[i]);
-                            }
-                        }
-                    }
-                }
-                catch (NullReferenceException) {
-                    Debug.Log("Type:" + Type.ToString() + "/ID:" + ID.ToString());
-                    return null;
-                }
-
-            }
-            KeyValuePair<ItemType, int> keyValuePair = new KeyValuePair<ItemType, int>(Type, ID);
-            if(ItemStatics.TryGetValue(keyValuePair,out ItemStore itemStore)){
-                return itemStore;
-            }
-            else {
-                Debug.LogError("在ItemLoad中无法取出该物品:Type=" + Type.ToString() + "/ID=" + ID.ToString());
-                return null;
-            }
-
-
-
-        }
-
-
-    }*/
-
 }

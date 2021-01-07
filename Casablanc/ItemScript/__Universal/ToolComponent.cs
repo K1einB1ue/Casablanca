@@ -10,7 +10,7 @@ public static class ToolComponent
         Begin();
         if (!object.Equals(ItemIn, This)) {
             if (This.AddItem(ItemIn)) {
-                ((Item_Detail)ItemIn).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+                ItemIn.Item_Status_Handler.GetWays = GetWays.Hand;
                 ItemoutEX = Items.Empty;
                 Normal();
             }
@@ -34,8 +34,8 @@ public static class ToolComponent
     }
 
     public static void RotateLock(Item item) {
-        ((Item_Detail)item).Info_Handler.Instance.GetComponent<Rigidbody>().constraints =
-             RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
+        item.Info_Handler.Instance.GetComponent<Rigidbody>().constraints =
+        RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
     }
 
 }

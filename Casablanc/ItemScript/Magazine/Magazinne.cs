@@ -67,7 +67,7 @@ public class MagazineStatic : ContainerStatic, Magazine, UIMagazine
                     this.bullet = item;
                     this.SetMagazinesize(this.bullet.Held, this.containermax);
                     item.Destory();
-                    ((Item_Detail)item).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Tool;
+                    item.Item_Status_Handler.GetWays = GetWays.Tool;
                     itemoutEX = Items.Empty;
                     return;
                 }

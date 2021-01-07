@@ -9,6 +9,7 @@ public static class StaticPath
 
     public static ItemLoad ItemLoad                                 = Resources.Load<ItemLoad>("静态路径加载区/物品静态加载");
     public static CharacterLoad CharacterLoad                       = Resources.Load<CharacterLoad>("静态路径加载区/角色静态加载");
+    public static ElementLoad ElementLoad                           = Resources.Load<ElementLoad>("静态路径加载区/元素静态加载");
 
 
     public static UIPool UIPool                                     = Resources.Load<UIPool>("静态路径加载区/UI池");

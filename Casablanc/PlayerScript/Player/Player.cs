@@ -148,12 +148,12 @@ public abstract class CharacterStatic : Player,ValuePlayer,UIPlayer, PlayerManag
     }
     public void Heldupdate() {
         Held.Destory();
-        ((Item_Detail)Held).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+        Held.Item_Status_Handler.GetWays = GetWays.Hand;
         this.HeldMark = this.HeldMark1;
         if (Held!=Items.Empty) {
             Held.Beheld(((Player)this).GetHandTransform());
-            ((Item_Detail)Held).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Tool;
-            if (((Item_Detail)Held).Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things) {
+            Held.Item_Status_Handler.GetWays = GetWays.Tool;
+            if (Held.Item_Status_Handler.DisplayWays.Display_things) { 
                 ((Container)Held).UpdateDisplay();
             }
         }
@@ -330,7 +330,7 @@ public abstract class CharacterStatic : Player,ValuePlayer,UIPlayer, PlayerManag
         if (!object.Equals(Held, Items.Empty)) {
             Held.Drop(Held.Instance.transform.position);
             Held.Instance.GetComponent<Rigidbody>().AddForce(dir);
-            ((Item_Detail)Held).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+            Held.Item_Status_Handler.GetWays = GetWays.Hand;
             ((Container)((Player)this).GetStaticBag()).DelItem(Held);
             Held = Items.Empty;
         }
@@ -339,8 +339,7 @@ public abstract class CharacterStatic : Player,ValuePlayer,UIPlayer, PlayerManag
         if(Loop&&Held!=null) {
             if (!object.Equals(Held, Items.Empty)) {
                 Held.Drop(((Player)this).GetPosition());
-                ToolComponent.RotateLock(Held);
-                ((Item_Detail)Held).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+                Held.Item_Status_Handler.GetWays = GetWays.Hand;
                 ((Container)((Player)this).GetStaticBag()).DelItem(Held);
                 Held = Items.Empty;
             }
@@ -355,7 +354,7 @@ public abstract class CharacterStatic : Player,ValuePlayer,UIPlayer, PlayerManag
     void Player._DestroyThingsOnHand() {
         if (!object.Equals(Held, Items.Empty)) {
             Held.Destory();
-            ((Item_Detail)Held).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+            Held.Item_Status_Handler.GetWays = GetWays.Hand;
             ((Container)((Player)this).GetStaticBag()).DelItem(Held);
             Held = Items.Empty;
         }
@@ -364,7 +363,7 @@ public abstract class CharacterStatic : Player,ValuePlayer,UIPlayer, PlayerManag
         return this.PlayerStaticBag;
     }
     void Player.Gain(Item item) {
-        ((Item_Detail)item).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+        Held.Item_Status_Handler.GetWays = GetWays.Hand;
         ((Container)this.PlayerStaticBag).AddItem(item);
     }
     Transform Player.GetHandTransform() {

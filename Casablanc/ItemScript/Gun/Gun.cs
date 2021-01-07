@@ -85,10 +85,10 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
         throw new System.NotImplementedException();
     }
     public virtual void TryReload(){
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things&&this.magazine.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Displayable) {//如果弹夹是外暴露的
+        if (this.Item_Status_Handler.DisplayWays.Display_things&&this.magazine.Item_Status_Handler.DisplayWays.Displayable) {//如果弹夹是外暴露的
             if (this.magazine != Items.Empty) {
                 if (this.magazine.Info_Handler.IsInstanced) {
-                    this.magazine.Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+                    this.magazine.Item_Status_Handler.GetWays = GetWays.Hand;
                     this.magazine.Drop(new Vector3());
                 }
                 this.magazine.Outercontainer.DelItem(this.magazine);
@@ -121,7 +121,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
         ((Bullet)((Magazine)this.magazine).bullet).Shoot(this);
     }
     public virtual List<Item> FindMarchMagazine() {
-        Container temp = ((ItemScript)this).Outercontainer;
+        Container temp = this.Outercontainer;
         return temp.FindMatch(item=> {
                 if(item.Type== ItemType.Magazine&&((GunBool)this).IsLegalMagazine(item)) {
                     if (((Magazine)item).magazineState.BulletID == this.BulletKind) {
@@ -138,7 +138,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
                 if (this.magazine == Items.Empty) {
                     this.magazine = item;
                     item.Destory();
-                    ((Item_Detail)item).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Tool;
+                    item.Item_Status_Handler.GetWays = GetWays.Tool;
                     itemoutEX = Items.Empty;
                     this.UpdateDisplay();
                     return;
@@ -149,7 +149,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
     }
     public override void SetItem(int Pos, Item item) {
         base.SetItem(Pos, item);
-        ((Item_Detail)item).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Tool;
+        item.Item_Status_Handler.GetWays = GetWays.Tool;
     }
     public override void Use3() {
         TryReload();   

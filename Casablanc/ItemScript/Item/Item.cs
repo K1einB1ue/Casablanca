@@ -184,13 +184,15 @@ public static class Items
     #endregion
    
 }
-
 public interface Item_Detail {
     Item_INFO_Handler Info_Handler { get; set; }
     Item_Held_Handler Item_Held_Handler { get; }
     Item_Object_Handler Item_Object_Handler { get; }
     Item_UI_Handler Item_UI_Handler { get; }
     Item_Size_Handler Item_Size_Handler { get; }
+    Item_Element_Handler Item_Element_Handler { get; }
+    Item_Status_Handler Item_Status_Handler { get; }
+    Item_RuntimeProperty_Detail_Handler Item_RuntimeProperty_Detail_Handler { get; }
     Item_Property GetItemProperty();
 }
 public interface ItemOnGroundBase
@@ -198,7 +200,6 @@ public interface ItemOnGroundBase
     void CollisionBase(Collision collision);
     void TriggerBase(Collider other);
 }
-
 public interface ItemUI
 {
     ref ItemIntro GetItemIntroRef();
@@ -206,14 +207,10 @@ public interface ItemUI
     int GetUIheld();
     bool Displaycount();
 }
-
 public interface ItemScript
 {
     Animator GetAnimator();
-    Container Outercontainer { get; set; }    
-    List<BoxCollider> GetBoxCollider();
 }
-
 public interface Item : Item_Detail
 {
     int ID { get; }
@@ -243,10 +240,11 @@ public interface Item : Item_Detail
     void InstanceTo(Vector3 vector3);
     void BeHeldButDrop(Transform transform);
     void Beheld(Transform transform);
+    void BreakUp(Vector3 vector3);
+    void BreakUp(Transform transform);
     ContainerState GetContainerState();
     List<ItemNodeDynamic> GetItemNodes();
 }
-
 public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 {
     public ItemType Type => this.Info_Handler.Item_Property.ItemStaticProperties.ItemType;
@@ -268,10 +266,14 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 
         }
     }
+    
+    public Item_Element_Handler Item_Element_Handler => Info_Handler;
     public Item_Held_Handler Item_Held_Handler => Info_Handler;
     public Item_Object_Handler Item_Object_Handler => Info_Handler;
     public Item_UI_Handler Item_UI_Handler => Info_Handler;
     public Item_Size_Handler Item_Size_Handler => Info_Handler;
+    public Item_Status_Handler Item_Status_Handler => Info_Handler;
+    public Item_RuntimeProperty_Detail_Handler Item_RuntimeProperty_Detail_Handler => Info_Handler;
     public Container Outercontainer { get => this.Out_Container; set => this.Out_Container = value; }
     public Container Outestcontainer => (Container)PreGetOutestcontainer(this);
     public ItemIntro ItemIntro
@@ -313,7 +315,7 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 
 
     public virtual void Death() {
-        this.Info_Handler.Item_Property.ItemRuntimeProperties.destoryTriiger = ItemRuntimeProperties.DestoryTriiger.Destroyed;
+        this.Item_Status_Handler.DestoryTriiger = DestoryTriiger.Destroyed;
         ((Item)this).OuterClear();
         this.Info_Handler.Destory();
     }
@@ -321,7 +323,7 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 
     public virtual void update() {
         this.Info_Handler.Trigger_Binded(this._AfterItemProperty);
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.useWays == ItemStaticProperties.UseWays.CanUse) {
+        if (this.Info_Handler.Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.useWays == ItemStaticProperties.UseWays.CanUse) {
             timer1.TimeingLoop(this.Use1, ref this.Trigger1);
             timer2.TimeingLoop(this.Use2, ref this.Trigger2);
             timer3.TimeingLoop(this.Use3, ref this.Trigger3);
@@ -395,9 +397,9 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
         this.Info_Handler.AddItemComponent(this);
     }
     private void DeathLogic(Action action) {
-        if (this.Info_Handler.Item_Property.ItemRuntimeProperties.deathTrigger == ItemRuntimeProperties.DeathTrigger.UnDeath) {
+        if (this.Item_Status_Handler.DeathTrigger == DeathTrigger.UnDeath) {
             action.Invoke();
-            this.Info_Handler.Item_Property.ItemRuntimeProperties.deathTrigger = ItemRuntimeProperties.DeathTrigger.Death;
+            this.Item_Status_Handler.DeathTrigger = DeathTrigger.Death;
         }
     }
     /// <summary>
@@ -419,6 +421,9 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
         }
         return false;
     }
+
+
+
 
     void Item.OuterClear() {
         if (this.Outercontainer != null) {
@@ -450,6 +455,13 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
         this.SetItem();
     }
 
+    public virtual void BreakUp(Vector3 vector3) {
+    
+    }
+    public virtual void BreakUp(Transform transform) {
+    
+    }
+
     private Item PreGetOutestcontainer(Item item) {
         if (item.Outercontainer != null) {
             Item temp = Outercontainer;
@@ -469,18 +481,11 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
             return null;
         }
         catch (Exception) {
-            Debug.LogError("在捕捉物品Animatior时出现错误  于脚本Item.ItemScript.GetAnimator方法");
+            Debug.LogError("在捕捉物品Animator时出现错误  于脚本Item.ItemScript.GetAnimator方法");
             return null;
         }
     }
 
-    public virtual List<BoxCollider> GetBoxCollider() {
-        List<BoxCollider> BoxColliders = new List<BoxCollider>();
-        if (this.Instance) {
-            BoxColliders= BoxColliders.Concat(this.Instance.GetComponents<BoxCollider>()).ToList<BoxCollider>();
-        }
-        return BoxColliders;
-    }
     public virtual List<ItemNodeDynamic> GetItemNodes() {
         List<ItemNodeDynamic> itemNodes = new List<ItemNodeDynamic>();
         return itemNodes;
@@ -503,7 +508,7 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
         return this.Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial;
     }
     public virtual bool Displaycount() {
-        return this.Info_Handler.Item_Property.ItemStaticProperties.numDisplayWays == ItemStaticProperties.NumDisplayWays.DisplayHeld;
+        return this.Info_Handler.Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.numDisplayWays == ItemStaticProperties.NumDisplayWays.DisplayHeld;
     }
 
     public ref ItemIntro GetItemIntroRef() {
@@ -520,7 +525,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
     }
 
 }
-
 public class IntroInfo
 {
     public bool Enable;
@@ -674,20 +678,11 @@ public class ItemIntro
 
 
 }
-
-
-
-
-
-
-
-
-
-
 public interface Item_INFO_Handler : 
     Item_UI_Handler, Item_Logic_Handler, Item_Values_Handler,Item_Held_Handler,
     Item_Trigger_Handler, Item_Object_Handler, Item_Size_Handler, Item_synchronization_Handler, 
-    Item_Rigid_Handler
+    Item_Rigid_Handler, Item_Thermodynamics_Handler, Item_Element_Handler, Item_Status_Handler,
+    Item_RuntimeProperty_Detail_Handler
 {
     Item_Property Item_Property { get; set; }
     bool Binded { get; }
@@ -696,15 +691,39 @@ public interface Item_INFO_Handler :
     void ReplaceInstance(GameObject Instance);
     void Destory();
 }
-
+public interface Item_RuntimeProperty_Detail_Handler
+{
+    RuntimeProperty_Detail_Info RuntimeProperty_Detail_Info { get; }
+    RuntimeProperty_Detail_Type RuntimeProperty_Detail_Type { get; }
+}
+public interface Item_Thermodynamics_Handler: IThermodynamics_Unit { }
+public interface Item_Status_Handler
+{
+    GetWays GetWays { get; set; }
+    DeathTrigger DeathTrigger { get; set; }
+    DestoryTriiger DestoryTriiger { get; set; }
+    ItemStaticProperties.NumDisplayWays NumDisplayWays { get; }
+    ItemStaticProperties.UseWays UseWays { get; }
+    ItemStaticProperties.LockWays LockWays { get; }
+    ItemStaticProperties.Death_WithinItem_Ways Death_WithinItem_Ways { get; }
+    ItemStaticProperties.DisplayWays DisplayWays { get; }
+}
 public interface Item_synchronization_Handler {
     public void Setsynchronization_BeforeInstance(Action action);
+}
+public interface Item_Element_Handler
+{
+    IEnumerator<Element> Elements { get; }
+    IEnumerator<Element> Liquid { get; }
+    IEnumerator<Element> Solid { get; }
+    IEnumerator<Element> Gas { get; }
+    IEnumerator<Element> Plasma { get; }
+    IEnumerator<Element> ElementMatch(Func<Element, bool> match);
 }
 public interface Item_Rigid_Handler
 {
 
 }
-
 public interface Item_Object_Handler {
     void BeHeld(Transform transform);
     void BeInstance(Vector3 vector3);
@@ -727,7 +746,6 @@ public interface Item_UI_Handler {
     //Vector3 GetCenter();
     //Vector2 GetCenterInScreen();
 }
-
 public interface Item_Logic_Handler {
     bool DeathCheck();
 
@@ -789,34 +807,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     public virtual void OnBinded() {
         RigidBody_Init();
     }
-
-    private void RigidBody_Init() {
-        if (this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody) {
-            if (this.Instance) {
-                this.Instance.AddComponent<Rigidbody>();
-            }
-        }
-        else {
-            if (this.Instance) {
-                if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
-                    GameObject.Destroy(rigidbody);
-                }
-            }
-        }
-    }
-    private void RigidBody_Apply() {
-        if(!this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
-            this.Instance.AddComponent<Rigidbody>();
-        }
-        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = true;
-    }
-    private void RigidBody_Remove() {
-        if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
-            GameObject.Destroy(rigidbody);         
-        }
-        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = false;
-    }
-
+    
     #region INFO
     void Item_INFO_Handler.Binding(Item_Property Bingding) {
         this.item_Property = Bingding;
@@ -840,8 +831,72 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         }
     }
     #endregion
- 
+    #region Thermodynamics
 
+    private List<Element> Elements => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Element.Elements;
+    public float SHC { get {
+            float Temp = 0;
+            foreach (var element in this.Elements) {
+                Temp += element.SHC;
+            }
+            return Temp * this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial;
+        }
+    }
+    public float Temperature { get {
+            float Temp = 0;
+            foreach (var element in this.Elements) {
+                Temp += element.temperature;
+            }
+            return Temp / this.Elements.Count;
+        }
+    }
+    public void ThermodynamicsAdjustment(float Energy) {
+        float Element_SHC = 0;
+        foreach(var element in this.Elements) {
+            Element_SHC += element.SHC;
+        }
+        float Div = Energy / Element_SHC;
+        foreach(var element in this.Elements) {
+            element.ThermodynamicsAdjustment(Div * element.SHC);
+        }
+    }
+
+    #endregion
+
+    #region RuntimeProperty_Detail
+    RuntimeProperty_Detail_Info Item_RuntimeProperty_Detail_Handler.RuntimeProperty_Detail_Info => Item_Property.ItemRuntimeProperties.Detail_Info;
+    RuntimeProperty_Detail_Type Item_RuntimeProperty_Detail_Handler.RuntimeProperty_Detail_Type => Item_Property.ItemRuntimeProperties.Detail_Type;
+    #endregion
+
+
+    #region Status
+    GetWays Item_Status_Handler.GetWays { get => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Status.GetWays__Initial; set => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Status.GetWays__Initial = value; }
+    DeathTrigger Item_Status_Handler.DeathTrigger { get => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Status.deathTrigger; set => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Status.deathTrigger = value; }
+    DestoryTriiger Item_Status_Handler.DestoryTriiger { get => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Status.destoryTriiger; set => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Status.destoryTriiger = value; }
+    ItemStaticProperties.NumDisplayWays Item_Status_Handler.NumDisplayWays => Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.numDisplayWays;
+    ItemStaticProperties.UseWays Item_Status_Handler.UseWays => Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.useWays;
+    ItemStaticProperties.LockWays Item_Status_Handler.LockWays => Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.LockWays;
+    ItemStaticProperties.Death_WithinItem_Ways Item_Status_Handler.Death_WithinItem_Ways => Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.Death_WithinItem_Ways;
+    ItemStaticProperties.DisplayWays Item_Status_Handler.DisplayWays => Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.DisplayWays;
+    #endregion
+
+
+
+
+    #region Element
+    IEnumerator<Element> Item_Element_Handler.Elements { get { foreach (var ele in this.Elements) { yield return ele; } } }
+    IEnumerator<Element> Item_Element_Handler.Liquid    => ElementMatch((var) => { return var.ElementState == ElementState.Liquid   ; });
+    IEnumerator<Element> Item_Element_Handler.Solid     => ElementMatch((var) => { return var.ElementState == ElementState.Solid    ; });
+    IEnumerator<Element> Item_Element_Handler.Gas       => ElementMatch((var) => { return var.ElementState == ElementState.Gas      ; });
+    IEnumerator<Element> Item_Element_Handler.Plasma    => ElementMatch((var) => { return var.ElementState == ElementState.Plasma   ; });
+    public IEnumerator<Element> ElementMatch(Func<Element, bool> match) {
+        foreach(var ele in this.Elements) {
+            if (match(ele)) {
+                yield return ele;
+            }
+        }
+    }
+    #endregion
     #region Values
     int Item_Size_Handler.Size => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Size.Size__Initial;
 
@@ -953,12 +1008,36 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         }
     }
     #endregion
-
-
-
-
-
     #region Object
+
+    private void RigidBody_Init() {
+        if (this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody) {
+            if (this.Instance) {
+                if (!this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+                    this.Instance.AddComponent<Rigidbody>();
+                }
+            }
+        }
+        else {
+            if (this.Instance) {
+                if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+                    GameObject.Destroy(rigidbody);
+                }
+            }
+        }
+    }
+    private void RigidBody_Apply() {
+        if (!this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+            this.Instance.AddComponent<Rigidbody>();
+        }
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = true;
+    }
+    private void RigidBody_Remove() {
+        if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+            GameObject.Destroy(rigidbody);
+        }
+        this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = false;
+    }
 
     public GameObject Instance => InstanceObj;
     bool Item_Object_Handler.IsHeld => BeHelding;
@@ -982,14 +1061,6 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 InstanceObj = GameObject.Instantiate(Origin, transform, false);
                 Sys_BeforeInstance?.Invoke();
                 this.RigidBody_Remove();
-                /*
-                if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezeAll;
-                    rigidbody.isKinematic = false;
-                    rigidbody.useGravity = false;
-                    rigidbody.freezeRotation = true;
-                }
-                */
                 InstanceObj.layer = 8;
             }
         }
@@ -1003,10 +1074,10 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 Sys_BeforeInstance?.Invoke();
                 this.RigidBody_Apply();
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
+                    rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = false;
                     rigidbody.useGravity = false;
-                    rigidbody.freezeRotation = false;
+                    //rigidbody.freezeRotation = false;
                 }
                 InstanceObj.layer = 9;
             }
@@ -1021,10 +1092,10 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 Sys_BeforeInstance?.Invoke();
                 this.RigidBody_Apply();
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
+                    rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = false;
                     rigidbody.useGravity = true;
-                    rigidbody.freezeRotation = false;
+                    //rigidbody.freezeRotation = false;
                 }
                 InstanceObj.layer = 9;
             }
@@ -1035,10 +1106,10 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 }
                 this.RigidBody_Apply();
                 if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
+                    rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
                     rigidbody.isKinematic = false;
                     rigidbody.useGravity = true;
-                    rigidbody.freezeRotation = false;
+                    //rigidbody.freezeRotation = false;
                 }
                 InstanceObj.layer = 9;
             }
@@ -1054,13 +1125,6 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                 InstanceObj = GameObject.Instantiate(Origin, transform, false);         
                 Sys_BeforeInstance?.Invoke();
                 RigidBody_Remove();
-                /*
-                if (InstanceObj.TryGetComponent<Rigidbody>(out Rigidbody rigidbody)) {
-                    rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
-                    rigidbody.isKinematic = true;
-                    rigidbody.useGravity = true;
-                    rigidbody.freezeRotation = false;
-                }*/
                 InstanceObj.gameObject.layer = 8;
             }
         }
@@ -1087,12 +1151,9 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
 
 
 
-
-
-
-
 [Serializable]
-public class Item_Property {
+public class Item_Property
+{
     public ItemRuntimeProperties.ItemRuntimeProperties ItemRuntimeProperties;
     public ItemStaticProperties.ItemStaticProperties ItemStaticProperties;
 
@@ -1100,46 +1161,61 @@ public class Item_Property {
     public Item_Property() { }
     public Item_Property(ItemType ItemType,int ItemID, ItemPreInstanceProperties.ItemPreInstanceProperties itemPreInstanceProperties) {
         this.ItemStaticProperties = StaticPath.ItemLoad[ItemType, ItemID].ItemStaticProperties;
-
         this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties,itemPreInstanceProperties);
     }
     public Item_Property(ItemRuntimeProperties.ItemRuntimeProperties itemRuntimeProperties) {
-        if(itemRuntimeProperties.Detail_Type== RuntimeProperty_Detail_Type.None) {
-            this.ItemRuntimeProperties = itemRuntimeProperties;
-            this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties;
+        if (itemRuntimeProperties.Detail_Info == RuntimeProperty_Detail_Info.Properties) {
+            if (itemRuntimeProperties.Detail_Type == RuntimeProperty_Detail_Type.AllDetail) {
+                this.ItemRuntimeProperties = itemRuntimeProperties;
+                this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties;
+            }
+            else if (itemRuntimeProperties.Detail_Type == RuntimeProperty_Detail_Type.Default) {
+                this.ItemStaticProperties = StaticPath.ItemLoad[itemRuntimeProperties.ItemType, itemRuntimeProperties.ItemID].ItemStaticProperties;
+                this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
+            }
         }
-        else if(itemRuntimeProperties.Detail_Type== RuntimeProperty_Detail_Type.Default) {
-            this.ItemStaticProperties = StaticPath.ItemLoad[itemRuntimeProperties.ItemType, itemRuntimeProperties.ItemID].ItemStaticProperties;
-            this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
+        else if(itemRuntimeProperties.Detail_Info== RuntimeProperty_Detail_Info.Store) {
+            if (itemRuntimeProperties.Detail_Type == RuntimeProperty_Detail_Type.AllDetail) {
+                this.ItemRuntimeProperties = itemRuntimeProperties;
+                try {
+                    this.ItemStaticProperties = itemRuntimeProperties.ItemStore.ItemStaticProperties;
+                }
+                catch {
+                    int i = 0;
+                }
+            }
+            else if (itemRuntimeProperties.Detail_Type == RuntimeProperty_Detail_Type.Default) {
+                this.ItemStaticProperties = itemRuntimeProperties.ItemStore.ItemStaticProperties;
+                this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
+            }
         }
         this.ItemRuntimeProperties.ItemRuntimeTemps = new ItemRuntimeProperties.ItemRuntimeTemps();
     }
 
 }
-
+public enum RuntimeProperty_Detail_Info
+{
+    Store,
+    Properties,
+}
 public enum RuntimeProperty_Detail_Type
 {
-    None,
+    AllDetail,
     Default,
-    PreInstance,
 }
 namespace ItemRuntimeProperties
 {
     
-    public enum DeathTrigger {
-        UnDeath,
-        Death,
-    }
-    public enum DestoryTriiger {
-        UnDestroyed,
-        Destroyed,
-    }
+    
+    
     [Serializable]
     public class ItemRuntimeValues {
         public RuntimeValues.RuntimeValues_State RuntimeValues_State = new RuntimeValues.RuntimeValues_State();
         public RuntimeValues.RuntimeValues_Held RuntimeValues_Held = new RuntimeValues.RuntimeValues_Held();
         public RuntimeValues.RuntimeValues_Size RuntimeValues_Size = new RuntimeValues.RuntimeValues_Size();
         public RuntimeValues.RuntimeValues_Rigid RuntimeValues_Rigid = new RuntimeValues.RuntimeValues_Rigid();
+        public RuntimeValues.RuntimeValues_Element RuntimeValues_Element = new RuntimeValues.RuntimeValues_Element();
+        public RuntimeValues.RuntimeValues_Status RuntimeValues_Status = new RuntimeValues.RuntimeValues_Status();
     }
     namespace RuntimeValues
     {
@@ -1165,6 +1241,18 @@ namespace ItemRuntimeProperties
         {
             public bool HaveRigidBody = true;
         }
+        [Serializable]
+        public class RuntimeValues_Element
+        {
+            public List<Element> Elements = new List<Element>();
+        }
+        [Serializable]
+        public class RuntimeValues_Status
+        {
+            public GetWays GetWays__Initial = GetWays.Hand;
+            public DeathTrigger deathTrigger = DeathTrigger.UnDeath;
+            public DestoryTriiger destoryTriiger = DestoryTriiger.UnDestroyed;
+        }
     }
     
     public class ItemRuntimeTemps {
@@ -1189,19 +1277,21 @@ namespace ItemRuntimeProperties
     
     }
 
-  
+    
 
     [Serializable]
     public class ItemRuntimeProperties
     {
         public ItemType ItemType = ItemType.Empty;
         public int ItemID = 0;
-        public RuntimeProperty_Detail_Type Detail_Type = RuntimeProperty_Detail_Type.None;
+
+        public RuntimeProperty_Detail_Info Detail_Info = RuntimeProperty_Detail_Info.Properties;
+        public RuntimeProperty_Detail_Type Detail_Type = RuntimeProperty_Detail_Type.AllDetail;
+
+        public ItemStore ItemStore; 
+
         [HideInInspector]
         public bool Inited = false;
-        public ItemStaticProperties.GetWays GetWays__Initial = ItemStaticProperties.GetWays.Hand;
-        public DeathTrigger deathTrigger = DeathTrigger.UnDeath;
-        public DestoryTriiger destoryTriiger = DestoryTriiger.UnDestroyed;
         public ItemRuntimeValues ItemRuntimeValues = new ItemRuntimeValues();
         public ItemRuntimeTemps ItemRuntimeTemps = new ItemRuntimeTemps();
 
@@ -1209,8 +1299,11 @@ namespace ItemRuntimeProperties
             if (!this.Inited) {
                 this.ItemType = itemStaticProperties.ItemType;
                 this.ItemID = itemStaticProperties.ItemID;
-                
-                GetWays__Initial = itemStaticProperties.GetWays;
+
+
+                RuntimeValues.RuntimeValues_Status Init_Status = this.ItemRuntimeValues.RuntimeValues_Status;
+                ItemStaticProperties.StaticValues.StaticValues_Status staticValues_Status = itemStaticProperties.ItemStaticValues.StaticValues_Status;
+                Init_Status.GetWays__Initial = staticValues_Status.GetWays;
 
                 RuntimeValues.RuntimeValues_State Init_State = this.ItemRuntimeValues.RuntimeValues_State;
                 ItemStaticProperties.StaticValues.StaticValues_State staticValues_State = itemStaticProperties.ItemStaticValues.StaticValues_State;
@@ -1241,32 +1334,43 @@ namespace ItemRuntimeProperties
                     Init_Rigid.HaveRigidBody = true;
                 }
 
-
+                RuntimeValues.RuntimeValues_Element Init_Element = this.ItemRuntimeValues.RuntimeValues_Element;
+                ItemStaticProperties.StaticValues.StaticValues_Element staticValues_Element = itemStaticProperties.ItemStaticValues.StaticValues_Element;
+                Init_Element.Elements = staticValues_Element.Elements;
 
             }
             this.Inited = true;        
         }
 
     }
-
-    
 }
+#region 动静态共用部分
+public enum GetWays
+{
+    /// <summary>
+    /// 可以用手拾取,最低等级
+    /// </summary>
+    Hand,
+    /// <summary>
+    /// 可以被工具拾取
+    /// </summary>
+    Tool,
 
-
+}
+public enum DeathTrigger
+{
+    UnDeath,
+    Death,
+}
+public enum DestoryTriiger
+{
+    UnDestroyed,
+    Destroyed,
+}
+#endregion
 namespace ItemStaticProperties
 {
-    public enum GetWays
-    {
-        /// <summary>
-        /// 可以用手拾取,最低等级
-        /// </summary>
-        Hand,
-        /// <summary>
-        /// 可以被工具拾取
-        /// </summary>
-        Tool,
-
-    }
+    
 
     public enum LockWays {
         /// <summary>
@@ -1312,10 +1416,12 @@ namespace ItemStaticProperties
     [Serializable]
     public class ItemStaticValues
     {
+        public StaticValues.StaticValues_Status StaticValues_Status = new StaticValues.StaticValues_Status();
         public StaticValues.StaticValues_State StaticValues_State = new StaticValues.StaticValues_State();
         public StaticValues.StaticValues_Held StaticValues_Held = new StaticValues.StaticValues_Held();
         public StaticValues.StaticValues_Size StaticValues_Size = new StaticValues.StaticValues_Size();
         public StaticValues.StaticValues_Rigid StaticValues_Rigid = new StaticValues.StaticValues_Rigid();
+        public StaticValues.StaticValues_Element StaticValues_Element = new StaticValues.StaticValues_Element();
     }
     namespace StaticValues
     {
@@ -1342,6 +1448,21 @@ namespace ItemStaticProperties
         {
             public bool HaveRigidBody = true;
         }
+        [Serializable]
+        public class StaticValues_Element
+        {
+            public List<Element> Elements = new List<Element>();
+        }
+        [Serializable]
+        public class StaticValues_Status
+        {
+            public GetWays GetWays = GetWays.Hand;
+            public NumDisplayWays numDisplayWays = NumDisplayWays.DisplayHeld;
+            public UseWays useWays = UseWays.CanUse;
+            public LockWays LockWays = LockWays.CantBeLocked;
+            public Death_WithinItem_Ways Death_WithinItem_Ways = Death_WithinItem_Ways.DropItem;
+            public DisplayWays DisplayWays = new DisplayWays();
+        }
     }
     [Serializable]
     public class ItemStaticGraphs {
@@ -1361,29 +1482,32 @@ namespace ItemStaticProperties
     
     
     }
+
+
+
+
+
+
+
+
+
     [Serializable]
     public class ItemStaticProperties
     {
         public ItemStaticGraphs ItemStaticGraphs = new ItemStaticGraphs();
         public ItemType ItemType = ItemType.Empty;
-        public int ItemID = 0;
-        public GetWays GetWays = GetWays.Hand;
-        public NumDisplayWays numDisplayWays = NumDisplayWays.DisplayHeld;
-        public UseWays useWays = UseWays.CanUse;
-        public LockWays LockWays = LockWays.CantBeLocked;
-        public Death_WithinItem_Ways Death_WithinItem_Ways = Death_WithinItem_Ways.DropItem;
-        public DisplayWays DisplayWays = new DisplayWays();
+        public int ItemID = 0;        
         public ItemStaticValues ItemStaticValues = new ItemStaticValues();       
     }
+
+
+
     
 }
 public enum ItemPreInstanceType {
     Standard,
     Rare,
-
-
 }
-
 namespace ItemPreInstanceProperties 
 {
     public enum RigidbodyWays
@@ -1407,3 +1531,92 @@ namespace ItemPreInstanceProperties
 }
 
 
+
+[CustomPropertyDrawer(typeof(ItemRuntimeProperties.ItemRuntimeProperties))]
+public class ItemRuntimePropertiesEditor : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+        using (new EditorGUI.PropertyScope(position, label, property)) {
+        Rect Next;
+            EditorGUIUtility.labelWidth = 60;
+            position.height = EditorGUIUtility.singleLineHeight;
+            var indent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            position.y -= EditorGUIUtility.singleLineHeight + 2;
+
+            SerializedProperty[] Base = new SerializedProperty[2] {
+        property.FindPropertyRelative("Detail_Info"),
+        property.FindPropertyRelative("Detail_Type"),
+        };
+            GUIContent[] BaseName = new GUIContent[2] {
+            new GUIContent("信息描述方法"),
+            new GUIContent("细节描述方法"),
+        };
+            Next = EditorEx.NewPropertyGroup(position, Base, BaseName);
+            string select_Info = property.FindPropertyRelative("Detail_Info").enumNames[property.FindPropertyRelative("Detail_Info").enumValueIndex];
+            string select_Type = property.FindPropertyRelative("Detail_Type").enumNames[property.FindPropertyRelative("Detail_Type").enumValueIndex];
+            if (select_Type == "AllDetail") {
+                if (select_Info == "Store") {
+                    SerializedProperty[] StoreType = new SerializedProperty[2] {
+                    property.FindPropertyRelative("ItemStore"),
+                    property.FindPropertyRelative("ItemRuntimeValues"),
+                    };
+                    EditorEx.NewPropertyGroup(Next, StoreType);
+
+                }
+
+                
+                else if (select_Info == "Properties") {
+                    SerializedProperty[] PropertiesType = new SerializedProperty[3] {
+                    property.FindPropertyRelative("ItemType"),
+                    property.FindPropertyRelative("ItemID"),
+                    property.FindPropertyRelative("ItemRuntimeValues"),
+                    };
+                    EditorEx.NewPropertyGroup(Next, PropertiesType);
+                }
+            }else if(select_Type== "Default") {
+                if (select_Info == "Store") {
+                    SerializedProperty[] StoreType = new SerializedProperty[1] {
+                    property.FindPropertyRelative("ItemStore"),
+                    };
+                    EditorEx.NewPropertyGroup(Next, StoreType);
+
+                }
+
+
+                else if (select_Info == "Properties") {
+                    SerializedProperty[] PropertiesType = new SerializedProperty[2] {
+                    property.FindPropertyRelative("ItemType"),
+                    property.FindPropertyRelative("ItemID"),
+                    };
+                    EditorEx.NewPropertyGroup(Next, PropertiesType);
+                }
+            }
+
+            EditorGUI.indentLevel = indent;
+        }
+        
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
+        string select_Info = property.FindPropertyRelative("Detail_Info").enumNames[property.FindPropertyRelative("Detail_Info").enumValueIndex];
+        string select_Type = property.FindPropertyRelative("Detail_Type").enumNames[property.FindPropertyRelative("Detail_Type").enumValueIndex];
+        if (select_Type == "AllDetail") {
+            if (select_Info == "Store") {
+                return 3 * (EditorGUIUtility.singleLineHeight + 2) + EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ItemRuntimeValues"));
+            }
+            else if (select_Info == "Properties") {
+                return 4 * (EditorGUIUtility.singleLineHeight + 2) + EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ItemRuntimeValues"));
+            }
+        }
+        else if (select_Type == "Default") {
+            if (select_Info == "Store") {
+                return 3 * (EditorGUIUtility.singleLineHeight + 2);
+            }
+            else if (select_Info == "Properties") {
+                return 4 * (EditorGUIUtility.singleLineHeight + 2);
+            }
+        }
+        return 50;
+    }
+}

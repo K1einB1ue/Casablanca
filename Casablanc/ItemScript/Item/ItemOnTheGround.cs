@@ -18,6 +18,8 @@ public class ItemOnTheGround : MonoBehaviour
     [SerializeField]
     private ItemInfoStore ItemInfoStore;
     [SerializeField]
+    private ItemStore ItemStore;
+    [SerializeField]
     private int ItemID = -1;
     [SerializeField]
     private ItemType ItemType = ItemType.Error;
@@ -81,6 +83,30 @@ public class ItemOnTheGround : MonoBehaviour
                         }
                     }
                 }
+            }else if (this.Info_Type == Info_Type.Store) {
+                this.itemOntheGround = Items.GetItemByItemTypeAndItemID_With_StaticProperties_And_PreInstanceProperties(this.ItemStore.ItemStaticProperties.ItemType, this.ItemStore.ItemStaticProperties.ItemID, this.ItemPreInstanceProperties);
+                if (this.Cotent.Count > 0) {
+                    for (int i = 0; i < Cotent.Count; i++) {
+                        ItemType itemType = Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch {
+                            RuntimeProperty_Detail_Info.Properties=> Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType,
+                            RuntimeProperty_Detail_Info.Store=> Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemType,
+                            _=> ItemType.Error,
+                        };
+                        int itemID = Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
+                        {
+                            RuntimeProperty_Detail_Info.Properties => Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID,
+                            RuntimeProperty_Detail_Info.Store => Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemID,
+                            _ => 0,
+                        };
+
+                        if (Items.GetIsContainerByItemTypeAndItemID(itemType, itemID)) { 
+                            ((ScriptContainer)this.itemOntheGround).SetItem(i, Cotent[i].GetContainer());
+                        }
+                        else {
+                            ((ScriptContainer)this.itemOntheGround).SetItem(i, Cotent[i].GetItem());
+                        }
+                    }
+                }
             }
             this.itemOntheGround.Info_Handler.ReplaceInstance(this.gameObject);
             this.TypeIDGive = true;
@@ -126,6 +152,7 @@ public enum Instance_Type {
 public enum Info_Type {
     InfoStore,
     Properties,
+    Store,
 }
 [CustomEditor(typeof(ItemOnTheGround))]
 public class ItemOnTheGroundEditor : Editor
@@ -139,6 +166,7 @@ public class ItemOnTheGroundEditor : Editor
     SerializedProperty MultiCount;
     SerializedProperty InitInScene;
     SerializedProperty Cotent;
+    SerializedProperty ItemStore;
     public override void OnInspectorGUI() {
         serializedObject.Update();
         ItemOnTheGround item = target as ItemOnTheGround;
@@ -152,6 +180,7 @@ public class ItemOnTheGroundEditor : Editor
         ItemPreInstanceProperties = serializedObject.FindProperty("ItemPreInstanceProperties");
         MultiCount = serializedObject.FindProperty("MultiCount");
         Cotent = serializedObject.FindProperty("Cotent");
+        ItemStore = serializedObject.FindProperty("ItemStore");
 
         //base.OnInspectorGUI();
         EditorGUI.BeginChangeCheck();
@@ -166,6 +195,10 @@ public class ItemOnTheGroundEditor : Editor
         else if (item.Info_Type == global::Info_Type.Properties) {
             EditorGUILayout.PropertyField(ItemType);
             EditorGUILayout.PropertyField(ItemID);
+            EditorGUILayout.PropertyField(ItemPreInstanceProperties);
+            EditorGUILayout.PropertyField(Cotent);
+        }else if(item.Info_Type== global::Info_Type.Store) {
+            EditorGUILayout.PropertyField(ItemStore);
             EditorGUILayout.PropertyField(ItemPreInstanceProperties);
             EditorGUILayout.PropertyField(Cotent);
         }
@@ -230,7 +263,7 @@ public class MaterialPack
 
     public void Update(Item itemOntheGround,bool selected) {
         for(int i = 0; i < materials.Count; i++) {
-            materials[i].SetFloat("CantGet", (itemOntheGround).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial == ItemStaticProperties.GetWays.Hand ? 0 : 1);
+            materials[i].SetFloat("CantGet", itemOntheGround.Item_Status_Handler.GetWays == GetWays.Hand ? 0 : 1);
             materials[i].SetFloat("Rate", 1.0f - itemOntheGround.Item_UI_Handler.GetHPrate());
             if (KeyPress.P || selected) {
                 materials[i].SetFloat("Boolean_590330D2", 1.0f);

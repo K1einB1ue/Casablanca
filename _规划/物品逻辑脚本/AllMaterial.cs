@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -43,4 +44,17 @@ public static class AllMaterial
             ((ValuePlayer)player).DecHP(0.1f);
         }
     }
+    [Item(ItemType.Materials,5)]
+    public class Steam : ItemStatic
+    {
+        public Steam() {
+
+        }
+    }
 }
+
+
+
+
+
+

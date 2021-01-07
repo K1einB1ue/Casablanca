@@ -45,16 +45,10 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     public override bool IsContainer => true;
     StoragMethodAdjustment ScriptContainer.StoragMethod { get { return this.storagMethodAdjustment; } set { this.storagMethodAdjustment = value; } }
     private StoragMethodAdjustment storagMethodAdjustment = new StoragMethodAdjustment();
-    /// <summary>
-    /// 开启容器碰撞
-    /// (如果内容物为外挂载,可视,则开启)
-    /// </summary>
-    public bool HardCore = false;
     public int containermax { get { return this.containerMax; } set { this.Containmax = true; this.containerMax = value; } }
     private int containerMax;
     private bool Containmax = false;
     public ContainerState ContainerState;
-    public List<BoxCollider> boxColliders = new List<BoxCollider>();
 
     public override void update() {
         base.update();    
@@ -97,7 +91,7 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     }
     public override void Beheld(Transform transform) {
         base.Beheld(transform);
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things){
+        if (this.Item_Status_Handler.DisplayWays.Display_things){
             for (int i = 0; i< this.ContainerState.size; i++) {
                 this.ContainerState.Contents[i].Beheld(this.Info_Handler.Instance.transform.Find("Attach").Find((i + 1).ToString()));
             }
@@ -105,7 +99,7 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     }
     public override void InstanceTo(Vector3 vector3) {
         base.InstanceTo(vector3);
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things) {
+        if (this.Item_Status_Handler.DisplayWays.Display_things) {
             for (int i = 0; i < this.ContainerState.size; i++) {
                 this.ContainerState.Contents[i].Beheld(this.Info_Handler.Instance.transform.Find("Attach").Find((i + 1).ToString()));
             }
@@ -113,7 +107,7 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     }
     public override void Drop(Vector3 vector3) {
         base.Drop(vector3);
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things) {
+        if (this.Item_Status_Handler.DisplayWays.Display_things) {
             for (int i = 0; i < this.ContainerState.size; i++) {
                 this.ContainerState.Contents[i].BeHeldButDrop(this.Info_Handler.Instance.transform.Find("Attach").Find((i + 1).ToString()));
             }
@@ -174,19 +168,19 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     }
     void Container.GetItemFormGround(GameObject gameObject) {
         if (gameObject.GetComponent<ItemOnTheGround>() != null) {
-            if (((Item_Detail)gameObject.GetComponent<ItemOnTheGround>().itemOntheGround).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial== ItemStaticProperties.GetWays.Hand) {
+            if (gameObject.GetComponent<ItemOnTheGround>().itemOntheGround.Item_Status_Handler.GetWays== GetWays.Hand) {
                 ((Container)this).AddItem((gameObject.GetComponent<ItemOnTheGround>().itemOntheGround));
             }
-            if (((Item_Detail)gameObject.GetComponent<ItemOnTheGround>().itemOntheGround).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial == ItemStaticProperties.GetWays.Tool){
+            if (gameObject.GetComponent<ItemOnTheGround>().itemOntheGround.Item_Status_Handler.GetWays == GetWays.Tool){
                 Debug.Log("'这需要什么才能拿下来吧.....' 摇头");
             }
         }
     }
     void Container.GetItemFormGround(Item item) {
-        if (((Item_Detail)item).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial== ItemStaticProperties.GetWays.Hand) {
+        if (item.Item_Status_Handler.GetWays == GetWays.Hand) {
             ((Container)this).AddItem(item);
         }
-        if (((Item_Detail)item).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial == ItemStaticProperties.GetWays.Tool) {
+        if (item.Item_Status_Handler.GetWays == GetWays.Tool) {
             Debug.Log("'这需要什么工具拿下来吧.....' 摇头");
         }
     }
@@ -301,7 +295,7 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     }
     void Container.DropAndDel(Item item,Vector3 pos) {
         foreach(Item items in Beforedrop(item)) {
-            ((Item_Detail)items).Info_Handler.Item_Property.ItemRuntimeProperties.GetWays__Initial = ItemStaticProperties.GetWays.Hand;
+            item.Item_Status_Handler.GetWays = GetWays.Hand;
             items.Drop(pos);
         }
         //((Container)this).DelItem(item);
@@ -401,22 +395,10 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
             }
         }
         if (Info_Handler.Binded) {
-            if (this.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things && item.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Displayable) {
+            if (this.Item_Status_Handler.DisplayWays.Display_things && item.Item_Status_Handler.DisplayWays.Displayable) {
                 UpdateDisplay();
             }
         }
-    }
-
-
-    public override List<BoxCollider> GetBoxCollider() {
-        List<BoxCollider> BoxColliders = new List<BoxCollider>();
-        if (this.Info_Handler.IsInstanced) {
-            BoxColliders=BoxColliders.Concat(this.Info_Handler.Instance.GetComponents<BoxCollider>()).ToList<BoxCollider>();
-        }
-        for (int i = 0; i < ContainerState.size; i++) {
-            BoxColliders=BoxColliders.Concat(((ItemScript)ContainerState.Contents[i]).GetBoxCollider()).ToList<BoxCollider>();
-        }
-        return BoxColliders;
     }
     private void ContainerReset(Item item) {
         if (item.Outercontainer != null) {
@@ -446,13 +428,13 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
 
 
     public void UpdateDisplay() {
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things) {
+        if (this.Item_Status_Handler.DisplayWays.Display_things) {
             if (this.Info_Handler.IsInstanced) {
                 for (int i = 0; i < this.ContainerState.size; i++) {
-                    if (this.ContainerState.Contents[i].Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Displayable) {
+                    if (this.ContainerState.Contents[i].Item_Status_Handler.DisplayWays.Displayable) {
                         this.ContainerState.Contents[i].BeHeldButDrop(this.Info_Handler.Instance.transform.Find("Attach").Find((i + 1).ToString()));
                         if (this.ContainerState.Contents[i].IsContainer) {
-                            if (this.ContainerState.Contents[i].Info_Handler.Item_Property.ItemStaticProperties.DisplayWays.Display_things) {
+                            if (this.ContainerState.Contents[i].Item_Status_Handler.DisplayWays.Display_things) {
                                 ((Container)this.ContainerState.Contents[i]).UpdateDisplay();
                             }
                         }
@@ -461,20 +443,6 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
             }
         }
     }
-
-
-
-    public void UpdateCollider() {
-        if (this.HardCore) {
-            if (this.Info_Handler.IsInstanced) {
-                for (int i = 0; i < this.ContainerState.size; i++) {
-                    this.boxColliders=this.boxColliders.Concat(((ItemScript)this.ContainerState.Contents[i]).GetBoxCollider()).ToList<BoxCollider>();
-                }
-            }
-        }
-    }
-
-
 }
 public class ContainerState
 {

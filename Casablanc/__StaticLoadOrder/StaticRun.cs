@@ -47,7 +47,8 @@ public sealed class StaticRun
         SingletonMono<EffectManager>        .Singleton_Mono_initialize();
         SingletonMono<EventManager>         .Singleton_Mono_initialize();
         SingletonMono<CoverManager>         .Singleton_Mono_initialize();
-
+        
+        SingletonMono<ThermodynamicsManager>   .Singleton_Mono_initialize();
         //事件系统注册表 需要实例化事件系统
         EventRegister.CoverEvent.Eventlize(CoverManager.Onchange);
 

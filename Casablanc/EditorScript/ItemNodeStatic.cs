@@ -32,10 +32,10 @@ public class ItemNodeStatic : ScriptableObject, ItemNode
 
         //对类值进行初始化工作
         if (this.ItemStaticInfoPackage.itemStaticDescribeWays== ItemStaticDescribeWays.ItemStroe) {
-            ((Item_Detail)item).Info_Handler.Binding(new Item_Property(this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemID, this.ItemPreInstanceInfoPackage.ItemPreInstanceProperties));
+            item.Info_Handler.Binding(new Item_Property(this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemID, this.ItemPreInstanceInfoPackage.ItemPreInstanceProperties));
         }
         else if (this.ItemStaticInfoPackage.itemStaticDescribeWays == ItemStaticDescribeWays.ItemTypeAndID) {
-            ((Item_Detail)item).Info_Handler.Binding(new Item_Property(this.ItemStaticInfoPackage.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStaticProperties.ItemID, this.ItemPreInstanceInfoPackage.ItemPreInstanceProperties));
+            item.Info_Handler.Binding(new Item_Property(this.ItemStaticInfoPackage.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStaticProperties.ItemID, this.ItemPreInstanceInfoPackage.ItemPreInstanceProperties));
         }
 
 
@@ -51,17 +51,19 @@ public class ItemNodeStatic : ScriptableObject, ItemNode
         
 
         if (container.GetContainerState() != null) {
-            for (int i = 0; i < container.GetContainerState().size; i++) {
-                          
-                Item item;
-                if (Items.GetIsContainerByItemTypeAndItemID(this.ItemContain[i].ItemStaticInfoPackage.GetItemStaticProperty().ItemType, this.ItemContain[i].ItemStaticInfoPackage.GetItemStaticProperty().ItemID)) {
-                    item = this.ItemContain[i].GetContainer();
+            if (ItemContain != null) {
+                for (int i = 0; i < Mathf.Min(container.GetContainerState().size,ItemContain.Count); i++) {
+
+                    Item item;
+                    if (Items.GetIsContainerByItemTypeAndItemID(this.ItemContain[i].ItemStaticInfoPackage.GetItemStaticProperty().ItemType, this.ItemContain[i].ItemStaticInfoPackage.GetItemStaticProperty().ItemID)) {
+                        item = this.ItemContain[i].GetContainer();
+                    }
+                    else {
+                        item = this.ItemContain[i].GetItem();
+                    }
+
+                ((ScriptContainer)container).SetItem(i, item);
                 }
-                else {
-                    item = this.ItemContain[i].GetItem();
-                }
-                
-            ((ScriptContainer)container).SetItem(i, item);
             }
         }
         return container;
@@ -90,7 +92,21 @@ public class ItemNodeDynamic: ItemNode
     }
 
     public Item GetItem() {
-        Item item = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID);
+
+        ItemType itemType = ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
+        {
+            RuntimeProperty_Detail_Info.Properties => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType,
+            RuntimeProperty_Detail_Info.Store => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemType,
+            _ => ItemType.Error,
+        };
+        int itemID = ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
+        {
+            RuntimeProperty_Detail_Info.Properties => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID,
+            RuntimeProperty_Detail_Info.Store => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemID,
+            _ => 0,
+        };
+
+        Item item = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(itemType, itemID/*this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID*/);
 
         item.Info_Handler.Binding(new Item_Property(this.ItemRuntimeInfoPackage.ItemRuntimeProperties));
         return item;
@@ -98,15 +114,31 @@ public class ItemNodeDynamic: ItemNode
     public Item GetContainer() {
         Item container = this.GetItem();
         if (container.GetContainerState() != null) {
-            for (int i = 0; i < container.GetContainerState().size; i++) {
-                Item item;
-                if (Items.GetIsContainerByItemTypeAndItemID(this.ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID)) {
-                    item = this.ItemContain[i].GetContainer();
+            if (ItemContain!=null) { 
+                for (int i = 0; i < Mathf.Min(container.GetContainerState().size,ItemContain.Count); i++) {
+                    Item item;
+
+                    ItemType itemType = ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
+                    {
+                        RuntimeProperty_Detail_Info.Properties => ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType,
+                        RuntimeProperty_Detail_Info.Store => ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemType,
+                        _ => ItemType.Error,
+                    };
+                    int itemID = ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
+                    {
+                        RuntimeProperty_Detail_Info.Properties => ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID,
+                        RuntimeProperty_Detail_Info.Store => ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemID,
+                        _ => 0,
+                    };
+
+                    if (Items.GetIsContainerByItemTypeAndItemID(itemType,itemID/*this.ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemContain[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID*/)) {
+                        item = this.ItemContain[i].GetContainer();
+                    }
+                    else {
+                        item = this.ItemContain[i].GetItem();
+                    }
+                ((ScriptContainer)container).SetItem(i, item);
                 }
-                else {
-                    item = this.ItemContain[i].GetItem();
-                }
-            ((ScriptContainer)container).SetItem(i, item);
             }
         }
         return container;
