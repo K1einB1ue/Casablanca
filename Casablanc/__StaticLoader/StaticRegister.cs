@@ -4,20 +4,7 @@ using UnityEngine;
 using System.Reflection;
 using System;
 using System.Linq;
-//using System.Reflection.Emit;
 
-public static class EventRegister
-{
-    public static EventBody CoverEvent = new EventBody("Cover-Change");
-    //public static EventBody SoundEvent = new EventBody("Cover-Change");
-    //public static EventBody DoorEvent = new EventBody("Cover-Change");
-    //public static EventBody CoverEvent = new EventBody("Cover-Change");
-
-
-
-
-
-}
 public static class UIRegister {
     public static void UIRegisterList() {
         Init_Search();
@@ -63,5 +50,40 @@ public static class ItemRegister
         }
         Items.FillIsContainerDictionary();
         return;
+    }
+}
+
+
+public static class CharacterRegister
+{
+    public static void CharacterRegisterList() {
+        Init_Search();
+    }
+    private static void Init_Search() {
+        Type type = typeof(CharacterBase);
+        Assembly assembly = Assembly.GetAssembly(type);
+        foreach (Type Child in assembly.GetTypes()) {
+            object[] vs = Child.GetCustomAttributes(typeof(CharacterAttribute), true);
+            if (vs.Length > 0) {
+                foreach (Attribute Att in vs) {
+                    CharacterAttribute itemAttribute = Att as CharacterAttribute;
+                    if (itemAttribute.enable) {
+                        Characters.AddGenerators(itemAttribute.CharacterID, Child);
+                    }
+                }
+            }
+        }
+        return;
+    }
+}
+
+public static class PoolRegister
+{
+
+    public static void UIPoolRegisterList() {
+        StaticPath.UIPool.__SetUP__Pool();
+        StaticPath.BulletPool_Ram.__SetUP__Pool();
+        StaticPath.BulletHolePool_Ram.__SetUP__Pool();
+        StaticPath.BulletSmokePool_Ram.__SetUP__Pool();
     }
 }

@@ -28,29 +28,30 @@ public sealed class StaticRun
     public static void StaticInit() {
         //物品系统注册表初始化
         ItemRegister.ItemRegisterList();
+        //角色系统注册表初始化
+        CharacterRegister.CharacterRegisterList();
         //界面系统注册表初始化
         UIRegister.UIRegisterList();
-        //UI物品池系统初始化
+        //物品池系统初始化
         PoolRegister.UIPoolRegisterList();
     }
     
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     public static void Init() {
-        SingletonMono<ScriptobjectManager>  .Singleton_Mono_initialize();   //解决输入端口唯一性_前置于所有具有输入端口的脚本
+        SingletonMono<ScriptobjectManager>  .Singleton_Mono_initialize();   //会变为Mono的ScriptableObject
+
         SingletonMono<HashMono>             .Singleton_Mono_initialize();   //得到可以删除的Update队列;
         SingletonMono<PlayerManager>        .Singleton_Mono_initialize();   //具有输入接口
         SingletonMono<CameraManager>        .Singleton_Mono_initialize();   //将会有输入接口
 
-        SingletonMono<PoolManager>          .Singleton_Mono_initialize();
         SingletonMono<UIManager>            .Singleton_Mono_initialize();
 
         SingletonMono<EffectManager>        .Singleton_Mono_initialize();
-        SingletonMono<EventManager>         .Singleton_Mono_initialize();
         SingletonMono<CoverManager>         .Singleton_Mono_initialize();
         
+
+        //未实现
         SingletonMono<ThermodynamicsManager>   .Singleton_Mono_initialize();
-        //事件系统注册表 需要实例化事件系统
-        EventRegister.CoverEvent.Eventlize(CoverManager.Onchange);
 
 
 

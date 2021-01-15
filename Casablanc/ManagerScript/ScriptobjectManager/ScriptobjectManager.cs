@@ -14,6 +14,11 @@ public class ScriptobjectManager : SingletonMono<ScriptobjectManager>
             obj.Update();
         }
     }
+    private void FixedUpdate() {
+        foreach(var obj in scriptable_Monos) {
+            obj.FixedUpdate();
+        }
+    }
 }
 
 

@@ -4,6 +4,64 @@ using UnityEngine;
 
 public class PlayerManager : SingletonMono<PlayerManager>
 {
+    public static Character MainCharacter;
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #region 旧版本
     public static Player Main;
     private static HashGenerator HashGenerator = new HashGenerator();
 
@@ -148,5 +206,6 @@ public class PlayerManager : SingletonMono<PlayerManager>
 
     public static bool MainPlayerHeldTypeBool(ItemType itemType) {
         return Main.Held.Type == itemType;
-    }   
+    }
+    #endregion
 }

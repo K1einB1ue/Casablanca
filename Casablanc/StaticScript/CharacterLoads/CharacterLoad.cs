@@ -11,14 +11,14 @@ public class CharacterLoad : ScriptableObject
 
 
     private void OnEnable() {
-        this.CharacterStatics = new Dictionary<int, CharacterStore>();
+        this.CharacterStatics ??= new Dictionary<int, CharacterStore>();
         foreach (var characterStore in characterlist) {
             if (characterStore != null) {
                 if( this.CharacterStatics.TryGetValue(characterStore.CharacterStaticProperties.CharacterID,out var character)) {
                     Debug.LogError("ÖØ¸´µÄ½ÇÉ«ID!");
                 }
                 else {
-                    this.CharacterStatics[characterStore.CharacterStaticProperties.CharacterID] = character;
+                    this.CharacterStatics[characterStore.CharacterStaticProperties.CharacterID] = characterStore;
                 }
             }
         }

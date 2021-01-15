@@ -15,14 +15,14 @@ public class BulletStatic : ItemStatic, Bullet
     public BulletStatic() { }
 
     public virtual void Shoot(Gun gun) {
-        int Mark = PoolManager.BulletPool.__UsePoolByID(gun.BulletKind);
-        if(PoolManager.BulletPool._GetGameObjectRef(gun.BulletKind, Mark).TryGetComponent<BulletHitThings>(out BulletHitThings bulletHitThings)){
+        int Mark = StaticPath.BulletPool_Ram.__UsePoolByID(gun.BulletKind);
+        if(StaticPath.BulletPool_Ram._GetGameObjectRef(gun.BulletKind, Mark).TryGetComponent<BulletHitThings>(out BulletHitThings bulletHitThings)){
             bulletHitThings.ID = gun.BulletKind;
             bulletHitThings.Mark = Mark; ;
             bulletHitThings.Time = 1;
             bulletHitThings.Gun = (Item)gun;
         }
-        this.NormalTransShoot(PoolManager.BulletPool._GetGameObjectRef(gun.BulletKind, Mark), gun);
+        this.NormalTransShoot(StaticPath.BulletPool_Ram._GetGameObjectRef(gun.BulletKind, Mark), gun);
     } 
 
     protected void NormalTransShoot(GameObject gameObject ,Gun gun) {

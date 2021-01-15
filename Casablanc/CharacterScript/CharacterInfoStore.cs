@@ -1,42 +1,70 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 
 [CreateAssetMenu(fileName = "新存储", menuName = "角色/动静态混合存储")]
 public class CharacterInfoStore : ScriptableObject
 {
-    public CharacterNodeStatic CharacterNodeStatic;
+    public CharacterNodeStatic characterNodeStatic;
     public CharacterNodeDynamic characterNodeDynamic;
 
+    
 
-    public ItemInfoStore ItemInfoStore;
-    public InputBase Input;
-
-
+    public bool save = false;
     public bool init = false;
 
 
     public Character GetCharacter() {
-        if (!this.init) {
-            this.init = true;
-            return this.CharacterNodeStatic.GetCharacter();
+        if (save) {
+            if (!this.init) {
+                this.init = true;
+                return this.characterNodeStatic.GetCharacter();
+            }
+            else {
+                return this.characterNodeDynamic.GetCharacter();
+            }           
         }
         else {
-            return this.characterNodeDynamic.GetCharacter();
+            return this.characterNodeStatic.GetCharacter();
         }
     }
 
-    public Character GetNonSavaCharacter() {
-        Character character = this.CharacterNodeStatic.GetCharacter();
-        character.Info_Handler.Binds(Input);
-        character.Info_Handler.Binds(ItemInfoStore.GetItem());
-        return character;
-    }
 
-    public void SaveItem(Character character) {
-        ItemNodeDynamic content = new ItemNodeDynamic(character.Info_Handler.Character_Property.CharacterRuntimeProperties.CharacterRuntimeBinds.RuntimeBinds_Bag.PlayerBag);
-        content.ItemContain = ((ScriptContainer)character.Info_Handler.Character_Property.CharacterRuntimeProperties.CharacterRuntimeBinds.RuntimeBinds_Bag.PlayerBag).GetItemNodes();
-        this.ItemInfoStore.itemNodesD = content;
+    public void Save(Character character) {
+        CharacterNodeDynamic node = new CharacterNodeDynamic(character);
+        this.characterNodeDynamic = node;
     }
 }
+
+
+[CustomEditor(typeof(CharacterInfoStore))]
+public class CharacterInfoStoreEditor : Editor
+{
+    public override void OnInspectorGUI() {
+        CharacterInfoStore infoStore = target as CharacterInfoStore;
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("save"), new GUIContent("是否保存"));
+        if (infoStore.save) {
+            if (infoStore.init) {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("characterNodeStatic"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("characterNodeDynamic"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("init"), new GUIContent("是否已初始化"));
+            }
+            else {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("characterNodeStatic"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("init"), new GUIContent("是否已初始化"));
+            }
+        }
+        else {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("characterNodeStatic"));
+        }
+
+        if (EditorGUI.EndChangeCheck()) {
+            serializedObject.ApplyModifiedProperties();
+        }
+        
+    }
+}
+

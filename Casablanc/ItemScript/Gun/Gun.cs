@@ -222,8 +222,8 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
         return false;
     }
     private void Smoke() {
-        int Mark = PoolManager.BulletSmokePool.__UsePoolByID(this.GunState.SmokeType);
-        PoolManager.BulletSmokePool._GetGameObjectRef(this.GunState.SmokeType, Mark, out GameObject gameObject);
+        int Mark = StaticPath.BulletSmokePool_Ram.__UsePoolByID(this.GunState.SmokeType);
+        StaticPath.BulletSmokePool_Ram._GetGameObjectRef(this.GunState.SmokeType, Mark, out GameObject gameObject);
         if (gameObject.TryGetComponent<GunFireSmoke>(out GunFireSmoke GunFireSmoke)) {
             GunFireSmoke.ID = this.GunState.SmokeType;
             GunFireSmoke.Mark = Mark;

@@ -59,15 +59,6 @@ public class CoverManager : SingletonMono<CoverManager>
     public static void Disable(string groupname) {
         CG[groupname].CoverOff((gameObject) => { return true; });
     }
-    public static void Onchange() {
-        //tmp = CoversInCamera.First;
-        //while (tmp != null) {
-        //    tmp.Value.CoverOff((Obj)=> {
-        //        return Mathf.Abs(Obj.transform.position.y - PlayerManager.Main.GetPosition().y) <= 3.0f&& Obj.transform.position.z>PlayerManager.Main.GetPosition().z;  
-        //    });
-        //    tmp = tmp.Next;
-        //}
-    }
 
 
     

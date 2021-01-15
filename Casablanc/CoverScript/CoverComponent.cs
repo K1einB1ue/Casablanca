@@ -12,12 +12,5 @@ public class CoverComponent : MonoBehaviour
     private void Awake() {
         CoverManager.EnterGroup(this.gameObject);
     }
-    private void OnBecameVisible() {
-        CoverManager.Enter(this.CoverGroup);
-        EventRegister.CoverEvent.Call();
-    }
-    private void OnBecameInvisible() {
-        CoverManager.Quit(this.CoverGroup);
-        EventRegister.CoverEvent.Call();
-    }
+   
 }

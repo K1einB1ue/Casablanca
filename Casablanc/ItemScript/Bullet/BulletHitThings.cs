@@ -38,8 +38,8 @@ public class BulletHitThings : MonoBehaviour
     }
 
     private void Spark(Collision collision) {
-        int Mark = PoolManager.BulletHolePool.__UsePoolByID(/*this.ID*/1);
-        PoolManager.BulletHolePool._GetGameObjectRef(1, Mark, out GameObject gameObject);
+        int Mark = StaticPath.BulletHolePool_Ram.__UsePoolByID(/*this.ID*/1);
+        StaticPath.BulletHolePool_Ram._GetGameObjectRef(1, Mark, out GameObject gameObject);
         if (gameObject.TryGetComponent<BulletHitSpark>(out BulletHitSpark bulletHitSpark)) {
             bulletHitSpark.ID = 1;
             bulletHitSpark.Mark = Mark;
@@ -52,9 +52,9 @@ public class BulletHitThings : MonoBehaviour
 
     private void Recycle(bool flag) {
         if (!flag) {
-            PoolManager.BulletPool._GetGameObjectRef(ID, Mark).GetComponent<Rigidbody>().velocity = new Vector3();
-            PoolManager.BulletPool._GetGameObjectRef(ID, Mark).GetComponent<TrailRenderer>().Clear();
-            PoolManager.BulletPool.__DisablePoolByMap(ID, Mark);
+            StaticPath.BulletPool_Ram._GetGameObjectRef(ID, Mark).GetComponent<Rigidbody>().velocity = new Vector3();
+            StaticPath.BulletPool_Ram._GetGameObjectRef(ID, Mark).GetComponent<TrailRenderer>().Clear();
+            StaticPath.BulletPool_Ram.__DisablePoolByMap(ID, Mark);
             Recycled = true;
         }
     }

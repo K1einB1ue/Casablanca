@@ -10,7 +10,7 @@ using UnityEngine;
 public class CharacterNodeStatic : ScriptableObject, CharacterNode
 {
     public CharacterStaticInfoPackage CharacterStaticInfoPackage;
-    public CharacterPreInstanceInfoPackage CharacterPreInstanceInfoPackage;
+    public CharacterPreInstanceInfoPackage CharacterPreInstanceInfoPackage = new CharacterPreInstanceInfoPackage();
     public Character GetCharacter() {
         Character character;
         if (this.CharacterStaticInfoPackage.characterStaticDescribeWays == CharacterStaticDescribeWays.CharacterStore) {
@@ -49,6 +49,10 @@ public interface CharacterNode
 public class CharacterNodeDynamic : CharacterNode 
 {
     public CharacterRuntimeInfoPackage CharacterRuntimeInfoPackage;
+
+    public CharacterNodeDynamic(Character character) {
+        this.CharacterRuntimeInfoPackage = new CharacterRuntimeInfoPackage(character);
+    }
     public Character GetCharacter() {
         Character tmp = Characters.GetCharacterByCharacterID(CharacterRuntimeInfoPackage.CharacterRuntimeProperties.CharacterID);
         tmp.Info_Handler.Binding(new Character_Property(this.CharacterRuntimeInfoPackage.CharacterRuntimeProperties));

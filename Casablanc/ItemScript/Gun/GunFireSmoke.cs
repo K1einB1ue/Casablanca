@@ -15,6 +15,6 @@ public class GunFireSmoke : MonoBehaviour
     }
 
     void Recycle() {
-        PoolManager.BulletSmokePool.__DisablePoolByMap(ID, Mark);
+        StaticPath.BulletSmokePool_Ram.__DisablePoolByMap(ID, Mark);
     }
 }

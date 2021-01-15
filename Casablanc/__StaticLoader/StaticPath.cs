@@ -24,9 +24,3 @@ public static class StaticPath
 }
 
 
-public static class PoolRegister {
-
-    public static void UIPoolRegisterList() {
-        StaticPath.UIPool.__SetUP__Pool();
-    }
-}

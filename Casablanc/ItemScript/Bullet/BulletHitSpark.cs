@@ -13,7 +13,7 @@ public class BulletHitSpark : MonoBehaviour
     }
 
     void Recycle() {
-        PoolManager.BulletHolePool.__DisablePoolByMap(ID, Mark);
+        StaticPath.BulletHolePool_Ram.__DisablePoolByMap(ID, Mark);
     }
 }
 

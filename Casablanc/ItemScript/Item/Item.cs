@@ -181,6 +181,8 @@ public static class Items
         }
         return false;     
     }
+
+
     #endregion
    
 }
@@ -960,6 +962,8 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
             this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial;
         }
     }
+    #endregion
+    #region Trigger
     void Item_Trigger_Handler.Trigger_Binded(Action action) {
         if (this.Binded) {
             if (!this.INFO_Handle_Temp.Trigger_Group.Trigger_Binded) {
@@ -1273,6 +1277,7 @@ namespace ItemRuntimeProperties
             public Transform ParTransform;
             public GameObject Instance;
 
+
         }
     
     }
@@ -1347,15 +1352,8 @@ namespace ItemRuntimeProperties
 #region 动静态共用部分
 public enum GetWays
 {
-    /// <summary>
-    /// 可以用手拾取,最低等级
-    /// </summary>
     Hand,
-    /// <summary>
-    /// 可以被工具拾取
-    /// </summary>
     Tool,
-
 }
 public enum DeathTrigger
 {
