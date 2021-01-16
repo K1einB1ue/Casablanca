@@ -41,7 +41,7 @@ public sealed class StaticRun
         SingletonMono<ScriptobjectManager>  .Singleton_Mono_initialize();   //会变为Mono的ScriptableObject
 
         SingletonMono<HashMono>             .Singleton_Mono_initialize();   //得到可以删除的Update队列;
-        SingletonMono<PlayerManager>        .Singleton_Mono_initialize();   //具有输入接口
+        SingletonMono<CharacterManager>     .Singleton_Mono_initialize();
         SingletonMono<CameraManager>        .Singleton_Mono_initialize();   //将会有输入接口
 
         SingletonMono<UIManager>            .Singleton_Mono_initialize();
@@ -77,9 +77,9 @@ public sealed class StaticRun
 
         //Mono系统注册表 需要实例化Mono
         Mono.Mono_initialize();
-        Mono.AddComponent<Item_Instance>();
-        Mono.AddComponent<KeyLoad>();
-        Mono.AddComponent<MouseLoad>();
+        //Mono.AddComponent<Item_Instance>();
+        //Mono.AddComponent<KeyLoad>();
+        //Mono.AddComponent<MouseLoad>();
 
 
         //动态Mono 需要实例化HashMono 且加载包需要继承自MonoPackage/MonoStatic

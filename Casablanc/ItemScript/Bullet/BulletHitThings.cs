@@ -13,15 +13,15 @@ public class BulletHitThings : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision) {
         if (Time != 0) {
-            if (collision.collider.gameObject.TryGetComponent<ItemOnTheGround>(out ItemOnTheGround itemOnTheGround)) {
+            if (collision.collider.gameObject.TryGetComponent<ItemOnTheGround>(out var itemOnTheGround)) {
                 if (itemOnTheGround.itemOntheGround != Gun) {
                     Time--;
-                    ((Item_Detail)itemOnTheGround.itemOntheGround).Info_Handler.BeDmged(((Gun)Gun).GetGunState().Firing_Dmg);
+                    (itemOnTheGround.itemOntheGround).Info_Handler.BeDmged(((Gun)Gun).GetGunState().Firing_Dmg);
                 }
             }
-            else if (collision.collider.gameObject.TryGetComponent<Player_Instance>(out Player_Instance player_Instance)) {
-                ((ValuePlayer)player_Instance.Instance).DecHP(((Gun)Gun).GetGunState().Firing_Dmg);
+            else if (collision.collider.gameObject.TryGetComponent<CharacterOnTheGround>(out var characterOnTheGround)) {
                 Time--;
+                characterOnTheGround.characterOntheGround.Info_Handler.BeDmged(((Gun)Gun).GetGunState().Firing_Dmg);
             }
             else {
                 Time--;

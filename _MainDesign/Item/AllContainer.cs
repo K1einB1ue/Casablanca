@@ -9,22 +9,11 @@ public static class AllContainer
     /// </summary>
 
     [Item(ItemType.Container, 0)]
-    public class PlayerStaticBag : ContainerStatic 
+    public class CharacterStaticBag : ContainerStatic 
     {
-        /*
-        static PlayerStaticBag() {
-            Items.AddGen<PlayerStaticBag>(ItemType.Container, 0);
-        }
-        */
-        public PlayerStaticBag() : base(7) { }
+        public Character Character;
+        public CharacterStaticBag() : base(7) { }
         public override void update() {
-            /*
-            timer1.TimeingLoop(this.Use1, ref this.Trigger1);
-            timer2.TimeingLoop(this.Use2, ref this.Trigger2);
-            timer3.TimeingLoop(this.Use3, ref this.Trigger3);
-            timer4.TimeingLoop(this.Use4, ref this.Trigger4);
-            timer5.TimeingLoop(this.Use5, ref this.Trigger5);
-            */
             this.CheckEmpty();
         }
 

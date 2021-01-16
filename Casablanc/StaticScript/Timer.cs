@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Timer
 {
@@ -31,6 +32,7 @@ public class Timer
     public Timer() {
         this.IntervalTime = 0.5f;
     }
+
     public void SetTimer(float IntervalTime) {
         this.IntervalTime = IntervalTime;
     }
@@ -76,3 +78,26 @@ public class Timer
     }
    
 }
+
+public class ActionTimer
+{
+    public float IntervalTime;
+    private float TimeBef = 0;
+    private UseEvent UseEvent = new UseEvent();
+    public ActionTimer() { }
+    public void SetTimer(float IntervalTime) {
+        this.IntervalTime = IntervalTime;
+    }
+    public void Registe(UnityAction unityAction) {
+        this.UseEvent.AddListener(unityAction);
+    }
+    public void Invoke() {
+        if ((this.IntervalTime + this.TimeBef <= Time.fixedTime)) {
+            this.TimeBef = Time.fixedTime;
+            UseEvent?.Invoke();
+        }
+    }
+}
+
+
+public class UseEvent : UnityEvent { }

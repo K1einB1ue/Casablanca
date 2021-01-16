@@ -161,7 +161,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
         TryFire();
     }
     public void initializeTimer() {
-        this.timer1.IntervalTime = 60 / this.GunState.Firing_Rate;
+        this.Use1Timer.IntervalTime = 60 / this.GunState.Firing_Rate;
     }
     GunState Gun.GetGunState() {
         return this.GunState;

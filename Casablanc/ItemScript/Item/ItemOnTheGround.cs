@@ -275,8 +275,8 @@ public class MaterialPack
     public void Update(Item itemOntheGround,bool selected) {
         for(int i = 0; i < materials.Count; i++) {
             materials[i].SetFloat("CantGet", itemOntheGround.Item_Status_Handler.GetWays == GetWays.Hand ? 0 : 1);
-            materials[i].SetFloat("Rate", 1.0f - itemOntheGround.Item_UI_Handler.GetHPrate());
-            if (KeyPress.P || selected) {
+            materials[i].SetFloat("Rate", 1.0f - itemOntheGround.Item_UI_Handler.HPrate);
+            if (Input.GetKey(KeyCode.P) || selected) {
                 materials[i].SetFloat("Boolean_590330D2", 1.0f);
             }
             else {

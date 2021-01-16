@@ -74,17 +74,17 @@ public static class UIS
         void DrawBagImages() {
             string SonName = "Item";
             for (int i = 0; i < 7; i++) {
-                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Frame").gameObject.SetActive(PlayerManager.Main.HeldOrder == i);
-                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").gameObject.SetActive(((ItemUI)((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i]).Displaycount());
-                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").GetComponent<Text>().text = ((ItemUI)((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i]).GetUIheld().ToString();
-                if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i] != null) {
-                    if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid == null) {
+                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Frame").gameObject.SetActive(CharacterManager.Main.Character_UI_Handler.Heldnum == i);
+                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").gameObject.SetActive(((ItemUI)CharacterManager.Main.Bag[i]).Displaycount());
+                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Bag[i]).GetUIheld().ToString();
+                if (CharacterManager.Main.Bag[i] != null) {
+                    if (CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid == null) {
                         this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().color = new Color(1, 1, 1, 0);
                     }
                     else {
                         this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().color = new Color(1, 1, 1, 1);
-                        if (((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid != null) {
-                            this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Container)PlayerManager.Main.GetStaticBag()).GetContainerState().Contents[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+                        if (CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid != null) {
+                            this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
                         }
                     }
                 }
@@ -105,13 +105,17 @@ public static class UIS
         }
 
         void DrawVIT() {
-            this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().fillAmount = (int)(((ValuePlayer)PlayerManager.Main).GetVITrate() * 50) / 50f;
+
+            this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.PPrate * 50) / 50f;
+            /*
             if (((UIPlayer)PlayerManager.Main).GetRunable()) {
                 this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().color = new Color(7 / 255, 255 / 255, 0);
             }
             else if (!((UIPlayer)PlayerManager.Main).GetRunable()) {
                 this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().color = new Color(255 / 255, 255 / 255, 0);
             }
+            */
+            
         }
     }
     [UI(UI_TYPE.StaticSon,2,0)]
@@ -128,7 +132,8 @@ public static class UIS
         }
 
         void DrawHP() {
-            this.UIgraph.Instance.transform.Find("血条").Find("Image").GetComponent<Image>().fillAmount = (int)(((ValuePlayer)PlayerManager.Main).GetHPrate() * 50) / 50f;
+            this.UIgraph.Instance.transform.Find("血条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.HPrate * 50) / 50f;
+
         }
     }
     [UI(UI_TYPE.StaticSon,3,0)]
@@ -137,14 +142,14 @@ public static class UIS
         public GunBar() { }
 
         public override void update() {
-            this.Enable(PlayerManager.MainPlayerHeldTypeBool(ItemType.Gun));
+            this.Enable(CharacterManager.Main.Held.Type == ItemType.Gun);
             base.update();
         }
         public override void Update() {
             this.DrawMagazine();
         }
         void DrawMagazine() {
-            List<Item> Magazines = ((Gun)PlayerManager.Main.Held).FindMarchMagazine();
+            List<Item> Magazines = ((Gun)CharacterManager.Main.Held).FindMarchMagazine();
             if (Magazines != null) {
                 int Count = Magazines.Count >= 2 ? 2 : Magazines.Count;
                 for (int i = 1; i < 3; i++) {
@@ -152,10 +157,10 @@ public static class UIS
                 }
                 for (int i = 0; i <= Count; i++) {
                     if (i == 0) {
-                        if (((Gun)PlayerManager.Main.Held).magazine != Items.Empty) {
+                        if (((Gun)CharacterManager.Main.Held).magazine != Items.Empty) {
                             this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(true);
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Gun)PlayerManager.Main.Held).magazine.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)((Gun)PlayerManager.Main.Held).magazine).GetBulletRate();
+                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Gun)CharacterManager.Main.Held).magazine.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)((Gun)CharacterManager.Main.Held).magazine).GetBulletRate();
                         }
                         else {
                             this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(false);
@@ -215,7 +220,7 @@ public static class UIS
         public ItemIntro() { }
 
         public override void update() {
-            this.Enable(PlayerManager.Main.PlayerBoolLock.Origin != null);
+            this.Enable(CharacterManager.Main.Character_UI_Handler.ItemSelect);
             base.update();
         }
         public override void Update() {
@@ -223,11 +228,11 @@ public static class UIS
         }
 
         public void DrawFrame() {
-            this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.Item_UI_Handler.CenterInScreen;
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+            this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround.Item_UI_Handler.CenterInScreen;
+            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
 
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("物品名").GetComponent<Text>().text = PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround.GetType().ToString();
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("描述").GetComponent<Text>().text = ((ItemUI)PlayerManager.Main.PlayerBoolLock.Origin.itemOntheGround).GetItemIntro().GetString();
+            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("物品名").GetComponent<Text>().text = CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround.GetType().ToString();
+            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("描述").GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround).GetItemIntro().GetString();
         }
     }
 
@@ -254,17 +259,8 @@ public class DebugWindow : UIStatic
         }
     }
 
-    public static void InputInterfaceInfo(InputInterface inputInterface) {
-        if (UpdateCount == CountDisplay) {
-            stringBuilder.Append("Input.Use1:" + inputInterface.InputState.Use1.ToString() + '\n');
-            stringBuilder.Append("Input.Use2:" + inputInterface.InputState.Use2.ToString() + '\n');
-            stringBuilder.Append("Input.Use3:" + inputInterface.InputState.Use3.ToString() + '\n');
-            stringBuilder.Append("Input.Use4:" + inputInterface.InputState.Use4.ToString() + '\n');
-            stringBuilder.Append("Input.Use5:" + inputInterface.InputState.Use5.ToString() + '\n');
-        }
-    }
 
-    
+  
     public static void DebugInfo(string Info) {
         if (UpdateCount == CountDisplay) {
             stringBuilder.Append(Info);

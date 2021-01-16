@@ -83,6 +83,7 @@ public class CharacterOnTheGround : MonoBehaviour
     private void OnDisable() {
         if (this.Info_Type == Info_Type.InfoStore) {
             this.CharacterInfoStore.Save(characterOntheGround);
+            this.CharacterInfoStore.characterNodeDynamic.CharacterRuntimeInfoPackage.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_Bags.ItemInfoStore.StoreContainer(characterOntheGround);
         }
         else if (this.Info_Type== Info_Type.Properties){
             
@@ -90,10 +91,20 @@ public class CharacterOnTheGround : MonoBehaviour
     }
 
     private void OnTriggerEnter(Collider other) {
-        this.characterOntheGround.Info_Handler.IsGround = true;
+        if (other.gameObject.TryGetComponent<CoverTriggerComponent>(out CoverTriggerComponent coverTriggerComponent)) {
+            coverTriggerComponent.Disable();
+        }
+        if (other.gameObject.layer != 29) {
+            this.characterOntheGround.Info_Handler.IsGround = true;
+        }
     }
     private void OnTriggerExit(Collider other) {
-        this.characterOntheGround.Info_Handler.IsGround = false;
+        if (other.gameObject.TryGetComponent<CoverTriggerComponent>(out CoverTriggerComponent coverTriggerComponent)) {
+            coverTriggerComponent.Enable();
+        }
+        if (other.gameObject.layer != 29) {
+            this.characterOntheGround.Info_Handler.IsGround = false;
+        }
     }
     private void OnTriggerStay(Collider other) {
         this.characterOntheGround.Info_Handler.IsGround = true;
@@ -190,11 +201,11 @@ public class CharacterOnTheGroundEditor : Editor
         if (Tran.FindSon("连接层").FindSon("模型") == null) {
             Tran.FindSon("连接层").GenerateSon("模型");
         }
-        if (Tran.FindSon("连接层").FindSon("模型").FindSon("头部") == null) {
-            Tran.FindSon("连接层").FindSon("模型").GenerateSon("头部");
+        if (Tran.FindSon("连接层").FindSon("头部") == null) {
+            Tran.FindSon("连接层").GenerateSon("头部");
         }
-        if (Tran.FindSon("连接层").FindSon("模型").FindSon("手部") == null) {
-            Tran.FindSon("连接层").FindSon("模型").GenerateSon("手部");
+        if (Tran.FindSon("连接层").FindSon("手部") == null) {
+            Tran.FindSon("连接层").GenerateSon("手部");
         }
 
     }

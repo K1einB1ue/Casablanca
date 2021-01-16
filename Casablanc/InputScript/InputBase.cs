@@ -11,6 +11,13 @@ public class InputBase : Channel, Input_Interface
 {
     Input_Property Input_Interface.Input_Property => this.input_Property;
     public Input_Property input_Property = new Input_Property();
+    RaycastHit Input_Interface.RaycastHit => this.RaycastHit;
+    protected RaycastHit RaycastHit;   
+    int Input_Interface.RaycastMask { get => Mask; set => Mask = value; }
+    protected int Mask = ~0;
+    bool Input_Interface.Hit => hit;
+    protected bool hit = false;
+
 
     protected InputTriggerEvent MoveUpEvent                          = new InputTriggerEvent();
     protected InputTriggerEvent MoveLeftEvent                        = new InputTriggerEvent();
@@ -49,8 +56,8 @@ public class InputBase : Channel, Input_Interface
                 case InputType.MoveLeft:                                                MoveLeftEvent.AddListener(unityAction);break;
                 case InputType.MoveRight:                                               MoveRightEvent.AddListener(unityAction);break;
                 case InputType.MoveDown:                                                MoveDownEvent.AddListener(unityAction);break;
-                case InputType.GetUpThingsInUpdateByRay:                                GetUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
-                case InputType.UseUpThingsInUpdateByRay:                                UseUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
+                case InputType.GetUpThingsByRay:                                GetUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
+                case InputType.UseUpThingsByRay:                                UseUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
                 case InputType.DropItem:                                                DropItemEvent.AddListener(unityAction);break;                
                 case InputType.Run:                                                     RunEvent.AddListener(unityAction); break;
                 case InputType.Use1:                                                    Use1Event.AddListener(unityAction); break;
@@ -74,8 +81,8 @@ public class InputBase : Channel, Input_Interface
                 case InputType.MoveLeft:                                                MoveLeftEvent.RemoveListener(unityAction); break;
                 case InputType.MoveRight:                                               MoveRightEvent.RemoveListener(unityAction); break;
                 case InputType.MoveDown:                                                MoveDownEvent.RemoveListener(unityAction); break;
-                case InputType.GetUpThingsInUpdateByRay:                                GetUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
-                case InputType.UseUpThingsInUpdateByRay:                                UseUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
+                case InputType.GetUpThingsByRay:                                GetUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
+                case InputType.UseUpThingsByRay:                                UseUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
                 case InputType.DropItem:                                                DropItemEvent.RemoveListener(unityAction); break;
                 case InputType.Run:                                                     RunEvent.RemoveListener(unityAction); break;
                 case InputType.Use1:                                                    Use1Event.RemoveListener(unityAction); break;
@@ -124,7 +131,10 @@ public abstract class MonoScriptableObject : ScriptableObject, IScriptable_Mono
 }
 
 public interface Input_Interface {
+    int RaycastMask { get; set; }
     Input_Property Input_Property { get; }
+    RaycastHit RaycastHit { get; }
+    bool Hit { get; }
     void RegisteInput(UnityAction unityAction, InputType inputType, bool Add = true);
     void RegisteInput(UnityAction<int> unityAction, InputType inputType, bool Add = true);
 }

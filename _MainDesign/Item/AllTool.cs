@@ -15,8 +15,8 @@ public static class AllTool
     public class Beer: ContainerStatic
     {
         public Beer() : base(1) {
-            this.timer1.SetTimer(1.0f);
-            this.timer2.SetTimer(0.2f);
+            this.Use1Timer.SetTimer(1.0f);
+            this.Use2Timer.SetTimer(0.2f);
         }
 
 
@@ -30,7 +30,7 @@ public static class AllTool
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 100, layerMask)) {
                 if (hit.collider.gameObject.tag == "Water") {
-                    if (Math.Distance(hit.point, this.Info_Handler.Instance.transform.position) <= 10) {
+                    if (MathEx.Distance(hit.point, this.Info_Handler.Instance.transform.position) <= 10) {
                         ((Container)this).AddItem(Items.GetItemByItemTypeAndItemIDStatic(ItemType.Materials, 1, 
                         (Item) => { 
                             ((Item_Detail)Item).Info_Handler.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial = 1; 
@@ -47,7 +47,7 @@ public static class AllTool
         }
 
         public override void Collision(Collision collision) {
-            this.Info_Handler.BeDmged(Math.scalarization(collision.relativeVelocity) * 5);
+            this.Info_Handler.BeDmged(MathEx.scalarization(collision.relativeVelocity) * 5);
         }
     }
 
@@ -60,11 +60,11 @@ public static class AllTool
             ToolComponent.threw(this);
         }
 
-        public override void Collision(Player player) {
-            ((ValuePlayer)player).DecHP(20);
+        public override void Collision(Character character) {
+            //((ValuePlayer)player).DecHP(20);
         }
         public override void Collision(Collision collision) {
-            this.Info_Handler.BeDmged(Math.scalarization(collision.relativeVelocity)/2.0f);
+            this.Info_Handler.BeDmged(MathEx.scalarization(collision.relativeVelocity)/2.0f);
         }
     }
 
@@ -99,7 +99,7 @@ public abstract class LighterStatic:ContainerStatic,Lighter
     public Timer ElectricityDec = new Timer(60f);
 
     public LighterStatic() : base(1) {
-        this.timer1.SetTimer(1);
+        this.Use2Timer.SetTimer(1);
     }
     public LighterState LighterState {
         get {

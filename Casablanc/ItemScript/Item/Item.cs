@@ -225,19 +225,18 @@ public interface Item : Item_Detail
     void OuterClear();
     void Destory();
     void update();
-    void TriggerLoop1(bool Bool);
-    void TriggerLoop2(bool Bool);
-    void TriggerLoop3(bool Bool);
-    void TriggerLoop4(bool Bool);
-    void TriggerLoop5(bool Bool);
-    void Use1();            
-    void Use2();
-    void Use3();
-    void Use4();
-    void Use5();
+    //void TriggerLoop1(bool Bool);
+    //void TriggerLoop2(bool Bool);
+    //void TriggerLoop3(bool Bool);
+    //void TriggerLoop4(bool Bool);
+    //void TriggerLoop5(bool Bool);
+    void InterfaceUse1();            
+    void InterfaceUse2();
+    void InterfaceUse3();
+    void InterfaceUse4();
+    void InterfaceUse5();
     void Use6(Item item,out Item itemoutEX);
     bool Trysum(Item itemIn);
-    void threw(Vector3 Dir);
     void Drop(Vector3 vector3);
     void InstanceTo(Vector3 vector3);
     void BeHeldButDrop(Transform transform);
@@ -298,21 +297,32 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 
 
 
-   
-    
-    public Timer timer1 = new Timer();
-    public Timer timer2 = new Timer();
-    public Timer timer3 = new Timer();
-    public Timer timer4 = new Timer();
-    public Timer timer5 = new Timer();
-    protected bool Trigger1 = false;
-    protected bool Trigger2 = false;
-    protected bool Trigger3 = false;
-    protected bool Trigger4 = false;
-    protected bool Trigger5 = false;
+    public ActionTimer Use1Timer = new ActionTimer();
+    public ActionTimer Use2Timer = new ActionTimer();
+    public ActionTimer Use3Timer = new ActionTimer();
+    public ActionTimer Use4Timer = new ActionTimer();
+    public ActionTimer Use5Timer = new ActionTimer();
 
 
-    protected ItemStatic() { }
+    //public Timer timer1 = new Timer();
+    //public Timer timer2 = new Timer();
+    //public Timer timer3 = new Timer();
+    //public Timer timer4 = new Timer();
+    //public Timer timer5 = new Timer();
+    //protected bool Trigger1 = false;
+    //protected bool Trigger2 = false;
+    //protected bool Trigger3 = false;
+    //protected bool Trigger4 = false;
+    //protected bool Trigger5 = false;
+
+
+    protected ItemStatic() {
+        Use1Timer.Registe(Use1);
+        Use2Timer.Registe(Use2);
+        Use3Timer.Registe(Use3);
+        Use4Timer.Registe(Use4);
+        Use5Timer.Registe(Use5);
+    }
     
 
 
@@ -325,19 +335,29 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
 
     public virtual void update() {
         this.Info_Handler.Trigger_Binded(this._AfterItemProperty);
-        if (this.Info_Handler.Item_Property.ItemStaticProperties.ItemStaticValues.StaticValues_Status.useWays == ItemStaticProperties.UseWays.CanUse) {
-            timer1.TimeingLoop(this.Use1, ref this.Trigger1);
-            timer2.TimeingLoop(this.Use2, ref this.Trigger2);
-            timer3.TimeingLoop(this.Use3, ref this.Trigger3);
-            timer4.TimeingLoop(this.Use4, ref this.Trigger4);
-            timer5.TimeingLoop(this.Use5, ref this.Trigger5);          
-        }
         this.Update();
         if (this.Info_Handler.DeathCheck()) {
             this.DeathLogic(this.Death);
         }
     }
     public virtual void Update() { }
+
+
+    void Item.InterfaceUse1() {
+        Use1Timer.Invoke();
+    }
+    void Item.InterfaceUse2() {
+        Use2Timer.Invoke();
+    }
+    void Item.InterfaceUse3() {
+        Use3Timer.Invoke();
+    }
+    void Item.InterfaceUse4() {
+        Use4Timer.Invoke();
+    }
+    void Item.InterfaceUse5() {
+        Use5Timer.Invoke();
+    }
 
     #region 触发循环的底层调用
     public virtual void Use1() { }
@@ -351,21 +371,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
     /// <param name="item">输入物品</param>
     /// <param name="itemoutEX">输出物品</param>
     public virtual void Use6(Item item,out Item itemoutEX) { itemoutEX = item; }
-    public void TriggerLoop1(bool Bool) {
-        this.Trigger1 = Bool;
-    }
-    public void TriggerLoop2(bool Bool) {
-        this.Trigger2 = Bool;
-    }
-    public void TriggerLoop3(bool Bool) {
-        this.Trigger3 = Bool;
-    }
-    public void TriggerLoop4(bool Bool) {
-        this.Trigger4 = Bool;
-    }
-    public void TriggerLoop5(bool Bool) {
-        this.Trigger5 = Bool;
-    }
     #endregion
 
     #region 碰撞和触发器函数的底层调用
@@ -375,25 +380,25 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
         this.Collision(collision.collider);
         if (collision.collider.TryGetComponent<ItemOnTheGround>(out ItemOnTheGround onTheGround)) {
             this.Collision(onTheGround.itemOntheGround);
-        }else if(collision.collider.TryGetComponent<Player_Instance>(out Player_Instance player_Instance)){
-            this.Collision(player_Instance.Instance);
+        }else if(collision.collider.TryGetComponent<CharacterOnTheGround>(out CharacterOnTheGround character)){
+            this.Collision(character.characterOntheGround);
         }
     }
     public virtual void Collision(Collider collider) { }
     public virtual void Collision(Collision collision) { }
-    public virtual void Collision(Player player) { }
+    public virtual void Collision(Character character) { }
     void ItemOnGroundBase.TriggerBase(Collider other) {
         this.Trigger(other);
         if (other.TryGetComponent<ItemOnTheGround>(out ItemOnTheGround onTheGround)) {
             this.Trigger(onTheGround.itemOntheGround);
         }
-        else if (other.TryGetComponent<Player_Instance>(out Player_Instance player_Instance)) {
-            this.Trigger(player_Instance.Instance);
+        else if (other.TryGetComponent<CharacterOnTheGround>(out CharacterOnTheGround character)) {
+            this.Trigger(character.characterOntheGround);
         }
     }
     public virtual void Trigger(Collider other) { }
     public virtual void Trigger(Item item) { }
-    public virtual void Trigger(Player player) { }
+    public virtual void Trigger(Character character) { }
     #endregion
     private void SetItem() {
         this.Info_Handler.AddItemComponent(this);
@@ -434,9 +439,6 @@ public abstract class ItemStatic : Item, ItemScript, ItemUI, ItemOnGroundBase
     }
 
 
-    void Item.threw(Vector3 Dir) {
-        PlayerManager.Main._DropThrewpre(Dir);      
-    }
     public virtual void Destory() {
         this.Info_Handler.Destory();
     }
@@ -741,17 +743,14 @@ public interface Item_Trigger_Handler {
     void Trigger_Display(Action action);
 }
 public interface Item_UI_Handler {
-    float GetHPrate();
+    float HPrate { get; }
     ItemStaticProperties.ItemStaticGraphs Graph { get; }
     Vector3 Center { get; }
     Vector2 CenterInScreen { get; }
-    //Vector3 GetCenter();
-    //Vector2 GetCenterInScreen();
+
 }
 public interface Item_Logic_Handler {
     bool DeathCheck();
-
-  
 }
 public interface Item_Size_Handler
 {
@@ -768,10 +767,13 @@ public interface Item_Held_Handler {
     void SetHeld(int max);
 
 }
-public interface Item_Values_Handler {
+public interface Item_Values_Handler: Object_Values_Handler {
+
+}
+public interface Object_Values_Handler
+{
     void BeDmged(float DMG);
     void BeFixed(float FIX);
-    
 }
 public class Item_INFO_Handle_Layer_Normal : Item_INFO_Handle_Layer_Base {
     public Item_INFO_Handle_Layer_Normal(){ }
@@ -984,9 +986,8 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     #endregion
     #region UI
     ItemStaticProperties.ItemStaticGraphs Item_UI_Handler.Graph => this.Item_Property.ItemStaticProperties.ItemStaticGraphs;
-    public virtual float GetHPrate() {
-        return this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
-    }
+    public float HPrate => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
+    
     Vector3 Item_UI_Handler.Center
     {
         get {

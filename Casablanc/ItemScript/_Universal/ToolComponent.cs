@@ -29,8 +29,15 @@ public static class ToolComponent
     }
 
     public static void threw(Item item,float forceRate) {
-        item.threw(Math.normalize(((ItemPlayer)PlayerManager.Main).GetHanding()) * 1000 * (Math.scalarization(((ItemPlayer)PlayerManager.Main).GetHanding()) / 1000.0f) * forceRate);
-        RotateLock(item);
+        if (item.Outercontainer.ID == 0) {
+            Character character = ((AllContainer.CharacterStaticBag)item.Outercontainer).Character;
+            item.Drop(item.Instance.transform.position);
+            item.Instance.GetComponent<Rigidbody>().AddForce(MathEx.normalize(CharacterManager.Main.Info_Handler.Handing) * 40000 * (MathEx.scalarization(CharacterManager.Main.Info_Handler.Handing) / 1000.0f) * forceRate);
+            item.Item_Status_Handler.GetWays = GetWays.Hand;
+            character.Bag.DelItem(item);
+            character.Info_Handler.HeldUpdate();
+            RotateLock(item);
+        }     
     }
 
     public static void RotateLock(Item item) {

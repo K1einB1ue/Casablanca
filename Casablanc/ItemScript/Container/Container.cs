@@ -17,6 +17,7 @@ public interface ScriptContainer
 
 public interface Container : Item
 {
+    Item this[int x] { get; set; }
     bool DecMagazine(int Pos, int num);
     bool DecHeld(int Pos,int num);
     void DropAndDel(Item item, Vector3 pos);
@@ -76,6 +77,8 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
             }
         }
     }
+
+
     bool Container.CheckSpace() {
         for(int i = 0; i < ContainerState.size; i++) {
             if (ContainerState.Contents[i] == Items.Empty) {
@@ -84,6 +87,9 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
         }
         return false;
     }
+
+
+    public Item this[int x] { get => this.ContainerState.Contents[x];set => this.ContainerState.Contents[x] = value; }
     protected void Itemupdate() {
         for (int i = 0; i < ContainerState.size; i++) {
             ContainerState.Contents[i].update();

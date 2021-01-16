@@ -75,6 +75,7 @@ public static class Characters
 public interface Character_Detail
 {
     Character_INFO_Handler Info_Handler { get; set; }
+    Character_UI_Handler Character_UI_Handler { get; }
     Character_Property GetCharacterProperty();
 
 }
@@ -82,6 +83,7 @@ public interface Character: Character_Detail
 {
     int ID { get; }
     Item Held { get; }
+    Container Bag { get; }
     GameObject Instance { get; }
     void OnEnable();
     void Update();
@@ -94,7 +96,9 @@ public abstract class CharacterBase : Character
 {
     public int ID => this.Info_Handler.Character_Property.CharacterStaticProperties.CharacterID;
     public Item Held => this.Info_Handler.Held;
+    public Container Bag => this.Info_Handler.Bag;
     public GameObject Instance => this.Info_Handler.Instance;
+    public Character_UI_Handler Character_UI_Handler => Info_Handler;
 
     public Character_INFO_Handler Info_Handler {
         get {
@@ -114,13 +118,18 @@ public abstract class CharacterBase : Character
 
     void Character.OnEnable() {
         this.Info_Handler.Trigger_Binded(this._AfterItemProperty);
+        ((AllContainer.CharacterStaticBag)this.Bag).Character = this;
         this.onEnable();
     }  
     void Character.OnDisable() {
         this.CharacterInfoStore.Save(this);
         this.onDisbale();
     }
-    void Character.Update() {      
+    void Character.Update() {
+        if (this.Info_Handler.Inited) {
+            this.Info_Handler.Update();
+            CharacterManager.Main = this;   //临时举措
+        }
         this.update();
     }
 
@@ -142,18 +151,24 @@ public abstract class CharacterBase : Character
 
 
 
-public interface Character_INFO_Handler: Character_Object_Handler, Character_Trigger_Handler, Character_Kinematic_Handler, Character_Container_Handler
+public interface Character_INFO_Handler: Character_Object_Handler, Character_Trigger_Handler, Character_Kinematic_Handler,
+    Character_Container_Handler, Character_UI_Handler, Character_Values_Handler
 {
     Character_Property Character_Property { get; set; }
     bool Binded { get; }
+    bool Inited { get; }
     void Binding(Character_Property Binding);
     void FixedUpdate();
+    void Update();
     void ReplaceInstance(GameObject Instance);
 
 }
 public interface Character_Object_Handler
 {
     GameObject Instance { get; }
+    Vector2 Heading { get; }
+    Vector2 Handing { get; }
+    void HeldUpdate();
 }
 
 public interface Character_Trigger_Handler
@@ -164,12 +179,22 @@ public interface Character_Kinematic_Handler
 {
     bool IsGround { get; set; }
 }
+public interface Character_UI_Handler
+{
+    ItemOnTheGround ItemSelect { get; }
+    int Heldnum { get; }
+    float HPrate { get; }
+    float PPrate { get; }
+}
 public interface Character_Container_Handler
 {
     Item Held { get; set; }
     Container Bag { get; set; }
 }
+public interface Character_Values_Handler : Object_Values_Handler
+{
 
+}
 
 public class Character_INFO_Handle_Layer_Normal: Character_INFO_Handle_Layer_Base
 {
@@ -184,6 +209,7 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
         set { this.character_Property = value; }
     }
     public bool Binded => this.INFO_Handle_Temp.Binded;
+    public bool Inited => this.INFO_Handle_Temp.Inited;
 
     private Character_Property character_Property;
     private Character_INFO_Handle_Temp INFO_Handle_Temp = new Character_INFO_Handle_Temp();
@@ -195,14 +221,28 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     public virtual void OnBinded() {
         this.ComponentsInit();
         this.HeldUpdate();
+
+        this.InputInterface.RaycastMask = ~(1 << 11);   //无视前景
+
         this.InputInterface.RegisteInput(SwitchItem, InputType.K);
         this.InputInterface.RegisteInput(DropThingsOnHand, InputType.DropItem);
+        this.InputInterface.RegisteInput(UseItem, InputType.Use);
+        this.InputInterface.RegisteInput(GetUpThingsByRay, InputType.GetUpThingsByRay);
+        this.InputInterface.RegisteInput(UseUpThingsByRay, InputType.UseUpThingsByRay);
+
+
+        this.INFO_Handle_Temp.Inited = true;
     }
 
     public virtual void FixedUpdate() {
         this.Vector2Init();
         this.Move();
         this.Flip();
+        this.HandRotate();
+    }
+
+    public virtual void Update() {
+        this.SelctUpdate();
     }
 
 
@@ -235,15 +275,13 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
         this.Rigidbody.velocity = FinalVel;
     }
 
-    Vector2 Heading { get => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Heading; set => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Heading = value; }
-    Vector2 Handing { get => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Handing; set => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Handing = value; }
+    public Vector2 Heading { get => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Heading; set => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Heading = value; }
+    public Vector2 Handing { get => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Handing; set => this.InputInterface.Input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_Vector.Handing = value; }
 
 
     private void Vector2Init() {
         Plane Handplane = new Plane(Vector3.forward, this.Hand.position);
         Plane Headplane = new Plane(Vector3.forward, this.Head.position);
-        //Vector3 Hand_Toward_Mouse = Camera.main.ScreenPointToRay(Input.mousePosition, Camera.MonoOrStereoscopicEye.Mono).GetIntersectWithLineAndPlane(Handplane);
-        //Vector3 Head_Toward_Mouse = Camera.main.ScreenPointToRay(Input.mousePosition, Camera.MonoOrStereoscopicEye.Mono).GetIntersectWithLineAndPlane(Headplane);
         Vector3 Hand_Toward_Mouse = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Handplane.GetDistanceToPoint(Camera.main.transform.position)));
         Vector3 Head_Toward_Mouse = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Headplane.GetDistanceToPoint(Camera.main.transform.position)));
         this.Handing = new Vector2(Hand_Toward_Mouse.x - Hand.position.x, Hand_Toward_Mouse.y - Hand.position.y);
@@ -262,6 +300,9 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
         this.Flex.rotation = Quaternion.Euler(0, this.Heading.x > 0 ? 0 : 180, 0);
     }
 
+    private void HandRotate() {
+        Hand.rotation = Quaternion.Euler(0, this.Flex.rotation.eulerAngles.y, Mathf.Atan(Handing.y / Mathf.Abs(Handing.x)) * 180 / Mathf.PI);
+    }
 
     #endregion
 
@@ -299,7 +340,7 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     #endregion
 
     #region Container
-    public Item Held { get => Bag.GetContainerState().Contents[HeldMark]; set => Bag.GetContainerState().Contents[HeldMark] = value; }
+    public Item Held { get => Bag[HeldMark]; set => Bag[HeldMark] = value; }
     public Container Bag { get => (Container)this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeTemps.RuntimeTemps_Bags.Bag; set => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeTemps.RuntimeTemps_Bags.Bag = value; }
 
     private int HeldMark { get => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_HeldState.HeldMark; set => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_HeldState.HeldMark = value; }
@@ -307,11 +348,32 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
         if(Heldnum!= HeldMark) {
             Held.Destory();
             Held.Item_Status_Handler.GetWays = GetWays.Hand;
+            //Held.TriggerLoop1(false);
+            //Held.TriggerLoop2(false);
+            //Held.TriggerLoop3(false);
+            //Held.TriggerLoop4(false);
+            //Held.TriggerLoop5(false);
             HeldMark = Heldnum;
             HeldUpdate();           
         }
     }
-    private void HeldUpdate() {
+
+    private void UseItem(int Usenum) {
+        //Held.TriggerLoop1(Usenum == 1);
+        //Held.TriggerLoop2(Usenum == 2);
+        //Held.TriggerLoop3(Usenum == 3);
+        //Held.TriggerLoop4(Usenum == 4);
+        //Held.TriggerLoop5(Usenum == 5);
+        switch (Usenum) {
+            case 1: Held.InterfaceUse1(); break;
+            case 2: Held.InterfaceUse2(); break;
+            case 3: Held.InterfaceUse3(); break;
+            case 4: Held.InterfaceUse4(); break;
+            case 5: Held.InterfaceUse5(); break;
+        }
+
+    }
+    public void HeldUpdate() {
         if (Held != Items.Empty) {
             Held.Beheld(Hand);
             Held.Item_Status_Handler.GetWays = GetWays.Tool;
@@ -324,6 +386,40 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
             Held = Items.Empty;
         }
     }
+    
+    ItemOnTheGround Character_UI_Handler.ItemSelect => OriginItem;
+    int Character_UI_Handler.Heldnum => HeldMark;
+    private ItemOnTheGround OriginItem { get => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeTemps.RuntimeTemps_Input.OriginItem; set => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeTemps.RuntimeTemps_Input.OriginItem = value; }
+    private void SelctUpdate() {
+        if (InputInterface.Hit) {
+            if (InputInterface.RaycastHit.collider) {
+                Collider collider = InputInterface.RaycastHit.collider;
+                if (collider.gameObject.TryGetComponent<ItemOnTheGround>(out var itemOnTheGround)) {
+                    if (OriginItem) {
+                        OriginItem.selected = false;
+                        OriginItem = null;
+                    }
+                    OriginItem = itemOnTheGround;
+                    OriginItem.selected = true;
+                }
+                else if (collider.gameObject.TryGetComponent<ItemLeader>(out var itemLeader)) {
+                    if (itemLeader.ITryGetComponent<ItemOnTheGround>(out var itemOnTheGround1)) {
+                        if (OriginItem) {
+                            OriginItem.selected = true;
+                            OriginItem = null;
+                        }
+                        OriginItem = itemOnTheGround1;
+                        OriginItem.selected = true;
+                    }
+                }
+                else if (OriginItem) {
+                    OriginItem.selected = false;
+                    OriginItem = null;
+                }
+            }
+        }
+        
+    }
     private void DropThingsOnHand() {
         if (Held != Items.Empty) {
             Held.Drop(this.Instance.transform.position);
@@ -331,6 +427,41 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
             Bag.DelItem(Held);
         }
     }
+    private void GetUpThingsByRay() {
+        if (OriginItem) {
+            GetUpThings(OriginItem.itemOntheGround);
+        }
+    }
+    private void UseUpThingsByRay() {
+        if (OriginItem) {
+            UseUpThings(OriginItem.itemOntheGround);
+        }
+    }
+
+
+    private void UseUpThings(Item Target) {
+        Target.Use6(Held, out var itemoutEx);
+        Held = itemoutEx;
+        HeldUpdate();
+    }
+    private void GetUpThings(Item item) {
+        this.Bag.GetItemFormGround(item);
+        HeldUpdate();
+    }
+    #endregion
+    #region Values
+    public virtual void BeDmged(float DMG) {
+        this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.HP_Current__Initial -= DMG - this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.DEF_Current__Initial;
+    }
+    public virtual void BeFixed(float FIX) {
+        this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.HP_Current__Initial += FIX;
+    }
+
+    #endregion
+
+    #region UI
+    public float HPrate => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
+    public float PPrate => this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.PP_Current__Initial / this.Character_Property.CharacterRuntimeProperties.CharacterRuntimeValues.RuntimeValues_State.PP_Curren_Max__Initial;
     #endregion
 }
 
@@ -338,6 +469,7 @@ public class Character_INFO_Handle_Temp
 {
     public Character_INFO_Handle_Temp_Trigger_Group Trigger_Group = new Character_INFO_Handle_Temp_Trigger_Group();
     public bool Binded = false;
+    public bool Inited = false;
 }
 public class Character_INFO_Handle_Temp_Trigger_Group
 {
@@ -360,8 +492,8 @@ public enum InputType {
     MoveLeft,
     MoveRight,
     MoveDown,
-    GetUpThingsInUpdateByRay,
-    UseUpThingsInUpdateByRay,
+    GetUpThingsByRay,
+    UseUpThingsByRay,
     DropItem,
     Run,
     Use,
@@ -463,6 +595,8 @@ namespace CharacterRuntimeProperties
             public float HP_Curren_Max__Initial = 100;
             public float HP_Current__Initial = 100;
             public float DEF_Current__Initial = 0;
+            public float PP_Current__Initial = 100;
+            public float PP_Curren_Max__Initial = 100;
         }
         [Serializable]
         public class RuntimeValues_Moral
@@ -519,12 +653,12 @@ namespace CharacterRuntimeProperties
         }
         public class RuntimeTemps_Bags
         {
-            public Item Select;
             public Item Bag;
         }
         public class RuntimeTemps_Input
         {
             public Input_Interface InputInterface;
+            public ItemOnTheGround OriginItem;
         }
         public class RuntimeTemps_Unity
         {
@@ -563,6 +697,8 @@ namespace CharacterRuntimeProperties
                 Init_State.DEF_Current__Initial = staticValues_State.DEF_Origin;
                 Init_State.HP_Current__Initial = staticValues_State.HP_Origin;
                 Init_State.HP_Curren_Max__Initial = staticValues_State.HP_Origin_Max;
+                Init_State.PP_Current__Initial = staticValues_State.PP_Origin;
+                Init_State.PP_Curren_Max__Initial = staticValues_State.PP_Origin_Max;
 
                 RuntimeValues.RuntimeValues_HeldState Init_HeldState = this.CharacterRuntimeValues.RuntimeValues_HeldState;
                 CharacterStaticProperties.StaticValues.StaticValues_HeldState staticValues_HeldState = characterStaticProperties.StaticValues_HeldState;
@@ -605,6 +741,8 @@ namespace CharacterStaticProperties
             public float HP_Origin_Max = 100;
             public float HP_Origin = 100;
             public float DEF_Origin = 0;
+            public float PP_Origin = 100;
+            public float PP_Origin_Max = 100;
         }
         [Serializable]
         public class StaticValues_Moral

@@ -65,11 +65,18 @@ public class ItemInfoStore : ScriptableObject
         this.itemNodesD = itemNodeDynamic;
         EditorUtility.SetDirty(this);
     }
+    public void StoreContainer(Character character) {
+        ItemNodeDynamic contain = new ItemNodeDynamic(character.Bag);
+        contain.ItemContain = ((ScriptContainer)character.Bag).GetItemNodes();
+        this.itemNodesD = contain;
+            
+    }
+    /*
     public void StoreContainer(Player player) {
         this.itemNodesD=player.ItemInfoPackup();
         EditorUtility.SetDirty(this);
     }
-
+    */
 
 
 }
