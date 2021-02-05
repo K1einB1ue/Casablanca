@@ -107,14 +107,6 @@ public static class UIS
         void DrawVIT() {
 
             this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.PPrate * 50) / 50f;
-            /*
-            if (((UIPlayer)PlayerManager.Main).GetRunable()) {
-                this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().color = new Color(7 / 255, 255 / 255, 0);
-            }
-            else if (!((UIPlayer)PlayerManager.Main).GetRunable()) {
-                this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().color = new Color(255 / 255, 255 / 255, 0);
-            }
-            */
             
         }
     }
@@ -176,23 +168,6 @@ public static class UIS
         
 
 
-    }
-    [UI(UI_TYPE.StaticSon,4,0)]
-    public class SkillBar : UIStatic
-    {
-        public SkillBar() { }
-
-        public override void update() {
-            this.Enable(true);
-            base.update();
-        }
-        public override void Update() {
-            DrawSkill();
-        }
-
-        void DrawSkill() {
-            //this.UIgraph.Instance.transform.Find("血条").Find("Image").GetComponent<Image>().fillAmount = (int)(((ValuePlayer)PlayerManager.Main).GetHPrate() * 50) / 50f;
-        }
     }
     [UI(UI_TYPE.Static,5)]
     public class DialogBar : UIStatic

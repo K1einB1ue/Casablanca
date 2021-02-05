@@ -5,6 +5,11 @@ using UnityEngine;
 
 public static class FindEx
 {
+    public static IEnumerable<Transform> GetSons(this Transform par) {
+        for(int i = 0; i < par.childCount; i++) {
+            yield return par.GetChild(i);
+        }
+    }
     public static IEnumerable<Transform> Find(Transform par, Func<string, bool> match) {
         for (int i = 0; i < par.childCount; i++) {
             if (match.Invoke(par.GetChild(i).name)) {

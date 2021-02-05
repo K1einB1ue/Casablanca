@@ -226,6 +226,8 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
 
         this.InputInterface.RegisteInput(SwitchItem, InputType.K);
         this.InputInterface.RegisteInput(DropThingsOnHand, InputType.DropItem);
+        this.InputInterface.RegisteInput(SwitchItemUp, InputType.WheelDown);
+        this.InputInterface.RegisteInput(SwitchItemDown, InputType.WheelUp);
         this.InputInterface.RegisteInput(UseItem, InputType.Use);
         this.InputInterface.RegisteInput(GetUpThingsByRay, InputType.GetUpThingsByRay);
         this.InputInterface.RegisteInput(UseUpThingsByRay, InputType.UseUpThingsByRay);
@@ -348,22 +350,31 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
         if(Heldnum!= HeldMark) {
             Held.Destory();
             Held.Item_Status_Handler.GetWays = GetWays.Hand;
-            //Held.TriggerLoop1(false);
-            //Held.TriggerLoop2(false);
-            //Held.TriggerLoop3(false);
-            //Held.TriggerLoop4(false);
-            //Held.TriggerLoop5(false);
             HeldMark = Heldnum;
             HeldUpdate();           
         }
     }
+    private void SwitchItemDown() {
+        Held.Destory();
+        Held.Item_Status_Handler.GetWays = GetWays.Hand;
+        HeldMark--;
+        if (HeldMark < 0) {
+            HeldMark = 6;
+        }
+        HeldUpdate();
+    }
+    private void SwitchItemUp() {
+        Held.Destory();
+        Held.Item_Status_Handler.GetWays = GetWays.Hand;
+        HeldMark++;
+        if (HeldMark > 6) {
+            HeldMark = 0;
+        }
+        HeldUpdate();
+    }
+
 
     private void UseItem(int Usenum) {
-        //Held.TriggerLoop1(Usenum == 1);
-        //Held.TriggerLoop2(Usenum == 2);
-        //Held.TriggerLoop3(Usenum == 3);
-        //Held.TriggerLoop4(Usenum == 4);
-        //Held.TriggerLoop5(Usenum == 5);
         switch (Usenum) {
             case 1: Held.InterfaceUse1(); break;
             case 2: Held.InterfaceUse2(); break;
@@ -510,7 +521,9 @@ public enum InputType {
     K4,
     K5,
     K6,
-    K7
+    K7,
+    WheelUp,
+    WheelDown,
 }
 
 

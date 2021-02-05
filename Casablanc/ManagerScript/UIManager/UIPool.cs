@@ -10,6 +10,8 @@ public class UIPool : ScriptableObject
     [SerializeField]
     private List<UIObject> __ObjectPoolOrigin = new List<UIObject>();
 
+    private List<UIObject> ObjectPoolOrigin = new List<UIObject>();
+
     public Dictionary<int, List<GameObject>> __UIPool=new Dictionary<int, List<GameObject>>();
     public Dictionary<int, List<bool>> __EnableTable = new Dictionary<int, List<bool>>();
     public Dictionary<int, int> IDmapping = new Dictionary<int, int>();
@@ -21,27 +23,32 @@ public class UIPool : ScriptableObject
     [HideInInspector]
     public int __Count = -1;
 
-
     public void __SetUP__Pool() {
-        __ObjectPoolOrigin.Sort((x, y) => x.ID.CompareTo(y.ID));
-        __MaxID = __ObjectPoolOrigin[__ObjectPoolOrigin.Count - 1].ID + 1;
+        ObjectPoolOrigin = new List<UIObject>();
+        for (int i = 0; i < __ObjectPoolOrigin.Count; i++) {
+            if (__ObjectPoolOrigin[i] != null) {
+                ObjectPoolOrigin.Add(__ObjectPoolOrigin[i]);
+            }
+        }
+        ObjectPoolOrigin.Sort((x, y) => x.ID.CompareTo(y.ID));
+        __MaxID = ObjectPoolOrigin[ObjectPoolOrigin.Count - 1].ID + 1;
         __Size = new int[__MaxID];
-        __Count = __ObjectPoolOrigin.Count;
+        __Count = ObjectPoolOrigin.Count;
         __Mapping();
         __InstanceAll();
     }
 
 
     void __Mapping() {
-        for (int i = 0; i < __ObjectPoolOrigin.Count; i++) {
-            IDmapping[__ObjectPoolOrigin[i].ID] = i;
-            IDBackMap[i] = __ObjectPoolOrigin[i].ID;
+        for (int i = 0; i < ObjectPoolOrigin.Count; i++) {
+            IDmapping[ObjectPoolOrigin[i].ID] = i;
+            IDBackMap[i] = ObjectPoolOrigin[i].ID;
         }
     }
     void __InstanceAll() {
-        for (int i = 0; i < __ObjectPoolOrigin.Count; i++) {
-            __Size[i] = __ObjectPoolOrigin[i].Size;
-            for (int j = 0; j < __ObjectPoolOrigin[i].Size; j++) {
+        for (int i = 0; i < ObjectPoolOrigin.Count; i++) {
+            __Size[i] = ObjectPoolOrigin[i].Size;
+            for (int j = 0; j < ObjectPoolOrigin[i].Size; j++) {
                 if (__EnableTable.TryGetValue(i,out List<bool> value)){
                     __EnableTable[i].Add(false);
                 }
@@ -51,7 +58,7 @@ public class UIPool : ScriptableObject
                 }
                 try {
                     GameObject temp;
-                    temp = GameObject.Instantiate(__ObjectPoolOrigin[i].UI);
+                    temp = GameObject.Instantiate(ObjectPoolOrigin[i].UI);
                     temp.SetActive(false);
                     if (__UIPool.TryGetValue(i, out List<GameObject> gameobj)) {
                         __UIPool[i].Add(temp);

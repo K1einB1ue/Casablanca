@@ -42,6 +42,8 @@ public class InputBase : Channel, Input_Interface
     protected InputTriggerEvent K5Event                              = new InputTriggerEvent();
     protected InputTriggerEvent K6Event                              = new InputTriggerEvent();
     protected InputTriggerEvent K7Event                              = new InputTriggerEvent();
+    protected InputTriggerEvent WheelUpEvent                         = new InputTriggerEvent();
+    protected InputTriggerEvent WheelDownEvent                       = new InputTriggerEvent();
 
     public override void onEnable() {
     }
@@ -73,6 +75,8 @@ public class InputBase : Channel, Input_Interface
                 case InputType.K5:                                                      K5Event.AddListener(unityAction); break;
                 case InputType.K6:                                                      K6Event.AddListener(unityAction); break;
                 case InputType.K7:                                                      K7Event.AddListener(unityAction); break;
+                case InputType.WheelUp:                                                 WheelUpEvent.AddListener(unityAction);break;
+                case InputType.WheelDown:                                               WheelDownEvent.AddListener(unityAction); break;
             }
         }
         else {
@@ -98,6 +102,8 @@ public class InputBase : Channel, Input_Interface
                 case InputType.K5:                                                      K5Event.RemoveListener(unityAction); break;
                 case InputType.K6:                                                      K6Event.RemoveListener(unityAction); break;
                 case InputType.K7:                                                      K7Event.RemoveListener(unityAction); break;
+                case InputType.WheelUp:                                                 WheelUpEvent.RemoveListener(unityAction); break;
+                case InputType.WheelDown:                                               WheelDownEvent.RemoveListener(unityAction); break;
             }
         }
         

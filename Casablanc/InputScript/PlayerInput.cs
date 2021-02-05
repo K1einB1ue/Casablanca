@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,7 +6,15 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "主机输入接口", menuName = "固化接口/主机输入接口")]
 public class PlayerInput : InputBase
 {
+    public InputSettings InputSettings = new InputSettings();
+    ActionTimer WheelUpTriggerTimer = new ActionTimer();
+    ActionTimer WheelDownTriggerTimer = new ActionTimer();
     private InputRuntimeProperties.RuntimeValues.RuntimeValues_State State => this.input_Property.InputRuntimeProperties.InputRuntimeValues.RuntimeValues_State;
+
+    public override void onEnable() {
+        WheelUpTriggerTimer.Registe(this.WheelUpEvent.Invoke);
+        WheelDownTriggerTimer.Registe(this.WheelDownEvent.Invoke);
+    }
     public override void FixedUpdate() {
         if (Input.GetKey(KeyCode.W))                    { this.MoveUpEvent                          ?.Invoke();
         State.W = true;}else { State.W = false;
@@ -35,7 +44,18 @@ public class PlayerInput : InputBase
         if (Input.GetKeyDown(KeyCode.R))                { this.Use3Event                            ?.Invoke(); this.Use_Event.Invoke(3); }
         if (Input.GetKey(KeyCode.LeftShift))            { this.RunEvent                             ?.Invoke(); }
 
-        
+        WheelUpTriggerTimer.IntervalTime = InputSettings.WheelIntervalTime;
+        WheelDownTriggerTimer.IntervalTime = InputSettings.WheelIntervalTime;
+        float dv = Input.GetAxis("Mouse ScrollWheel");
+        if (dv > this.InputSettings.WheelSensor) {
+            WheelUpTriggerTimer.Invoke();
+        }
+        else if (dv < -this.InputSettings.WheelSensor) {
+            WheelDownTriggerTimer.Invoke();
+        }
+
+
+
     }
     public override void Update() {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -43,8 +63,12 @@ public class PlayerInput : InputBase
     }
 }
 
-
-
+[Serializable]
+public class InputSettings
+{
+    public float WheelSensor = 0.25f;
+    public float WheelIntervalTime = 0.1f;
+}
 
 
 public class NetInput : InputBase
