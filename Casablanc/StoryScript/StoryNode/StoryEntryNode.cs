@@ -19,6 +19,7 @@ public class StoryEntryNode : StoryNodeBase
                 foreach (var pout in port.GetConnections()) {
                     if (((IStory)pout.node).GetUpdateType() == Story_UpdateType.Unable) {
                         ((IStory)pout.node).SetUpdateType(Story_UpdateType.PreEnable);
+                        ((IStory)pout.node).PreloadUpdate();
                     }
                 }
             }

@@ -7,11 +7,10 @@ using UnityEngine;
 public class StoryInfoDialogInfo : ScriptableObject
 {
     private List<DialogNode> Enabled = new List<DialogNode>();
-    private List<int> DialogHash = new List<int>();
 
 
 
 
-    public DialogNode CurrentDialog;
+    public Dialog CurrentDialog;
     
 }

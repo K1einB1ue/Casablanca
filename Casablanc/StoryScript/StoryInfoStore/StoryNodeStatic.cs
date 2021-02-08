@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -34,6 +35,93 @@ public class StoryNodeCurrent : NodeStoreBase, ISerializationCallbackReceiver
         }
     }
 }
+
+
+
+public class StoryNodeStatic : ScriptableObject, StoryStoreSpace.StoryNode
+{
+    public StoryStaticInfoPackage StoryStaticInfoPackage;
+    public StoryPreInstanceInfoPackage StoryPreInstanceInfoPackage = new StoryPreInstanceInfoPackage();
+}
+[Serializable]
+public class StoryNodeDynamic : StoryStoreSpace.StoryNode 
+{
+    public StoryRuntimeInfoPackage StoryRuntimeInfoPackage;
+    public StoryNodeDynamic(Story story) {
+        this.StoryRuntimeInfoPackage = new StoryRuntimeInfoPackage(story);
+    }
+}
+[Serializable]
+public enum StoryStaticDescribeWays
+{
+    StoryStore,
+    StoryID,
+}
+[Serializable]
+public class StoryStaticInfoPackage
+{
+    public StoryStaticDescribeWays storyStaticDescribeWays = StoryStaticDescribeWays.StoryStore;
+    public StoryStore StoryStore;
+}
+
+public class StoryRuntimeInfoPackage
+{
+    public StoryRuntimeProperties.StoryRuntimeProperties StoryRuntimeProperties;
+    public StoryRuntimeInfoPackage(Story story) {
+        
+    }
+}
+public class StoryPreInstanceInfoPackage
+{
+
+}
+
+
+
+
+namespace StoryStoreSpace
+{
+    public interface StoryNode
+    {
+        //Story GetStory();
+    }
+}
+
+
+public interface Story
+{
+
+}
+public abstract class StoryBase : Story 
+{
+
+}
+
+namespace StoryStaticProperties
+{
+    [Serializable]
+    public class StoryStaticProperties
+    {
+
+    }
+}
+namespace StoryRuntimeProperties
+{
+    [Serializable]
+    public class StoryRuntimeProperties
+    {
+
+    }
+}
+namespace StoryPreInstanceProperties
+{
+    [Serializable]
+    public class StoryPreInstanceProperties
+    {
+
+    }
+}
+
 
 public abstract class NodeStoreBase : ScriptableObject, INode {
     protected Dictionary<int, StoryBlock> StoryBlocks = new Dictionary<int, StoryBlock>();

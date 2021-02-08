@@ -9,13 +9,12 @@ using XNodeEditor;
 public class OnlyOneNode : NodeStatic
 {
     [Input(connectionType = ConnectionType.Override, backingValue = ShowBackingValue.Never,dynamicPortList = true)] public bool @触发输入;
-    [Output(connectionType = ConnectionType.Override, dynamicPortList = true)]                                      public bool @触发输出;
+    [Output(connectionType = ConnectionType.Multiple, dynamicPortList = true)]                                      public bool @触发输出;
     public int EnableNum = 1;
     public List<int> EnableList = new List<int>();
     public static StringBuilder stringBuilder = new StringBuilder();
 
     public override void ReStruct() {
-        this.EnableNum = 1;
         this.EnableList = new List<int>();
     }
     public override object GetValue(NodePort port) {

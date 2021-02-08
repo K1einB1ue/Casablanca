@@ -32,22 +32,7 @@ public class StoryBlock : NodeBlockBase
         NodeHash.DisHash(storyNode.Hash);
         storyNode.Hash = -1;
     }
-    /*
-    void ISerializationCallbackReceiver.OnAfterDeserialize() {
-        this.StoryNodes.Clear();
-        foreach (var node in ActiveNode) {
-            node.Hash = NodeHash.GetHash();
-            StoryNodes[node.Hash] = node;
-        }
-    }
-    void ISerializationCallbackReceiver.OnBeforeSerialize() {
-        this.ActiveNode.Clear();
-        foreach (var node in StoryNodes) {
-            node.Value.Hash = -1;
-            this.ActiveNode.Add(node.Value);
-        }
-    }
-    */
+
     public override void Update() {
         BeforeUpdate();
         base.Update();

@@ -13,14 +13,9 @@ public class StoryNode : StoryNodeBase
     [Input(ShowBackingValue.Never,typeConstraint = TypeConstraint.Strict)]                         public bool        @触发完成;
     [Input(ShowBackingValue.Never,typeConstraint = TypeConstraint.Strict)]                         public bool        @触发启用;
 
+
     [HideInInspector]
     public int Hash = -1;
-    //[TextArea] public string 大致描述;
-
-
-    public override void ReStruct() {
-        ((IStory)this).SetUpdateType(Story_UpdateType.Unable);
-    }
 
     public override object GetValue(NodePort port) {
         bool flag = true;
@@ -80,17 +75,12 @@ public class StoryNode : StoryNodeBase
                 }
             }
             if (flag) {
-#if !UNITY_EDITOR
-                this.StoryBlock.LoadoffStoryNode(this);
-#endif
                 ((IStory)this).SetUpdateType(Story_UpdateType.Enable);
                 foreach (var POUT in Outputs) {
                     if (POUT.fieldName == "后触事件") {
                         foreach (var Pout in POUT.GetConnections()) {
-#if !UNITY_EDITOR
-                            this.StoryBlock.LoadStoryNode((StoryNode)Pout.node);
-#endif
-                            ((IStory)Pout.node).SetUpdateType(Story_UpdateType.PreEnable);                           
+                            ((IStory)Pout.node).SetUpdateType(Story_UpdateType.PreEnable);
+                            ((IStory)Pout.node).PreloadUpdate();
                         }
                     }
                 }
@@ -116,17 +106,12 @@ public class StoryNode : StoryNodeBase
             }
             if (flag) {
                 change = true;
-#if !UNITY_EDITOR
-                this.StoryBlock.LoadoffStoryNode(this);
-#endif
                 ((IStory)this).SetUpdateType(Story_UpdateType.Enable);
                 foreach (var POUT in Outputs) {
                     if (POUT.fieldName == "后触事件") {
                         foreach (var Pout in POUT.GetConnections()) {
-#if !UNITY_EDITOR
-                            this.StoryBlock.LoadStoryNode((StoryNode)Pout.node);
-#endif
                             ((IStory)Pout.node).SetUpdateType(Story_UpdateType.PreEnable);
+                            ((IStory)Pout.node).PreloadUpdate();
                         }
                     }
                 }
@@ -153,6 +138,7 @@ public interface INode {
 }
 public interface IStory {
     void Update(out bool change);
+    void PreloadUpdate();
     Story_UpdateType GetUpdateType();
     void SetUpdateType(Story_UpdateType updateType);
 
@@ -162,9 +148,14 @@ public abstract class StoryNodeBase : NodeStatic, IStory {
     [SerializeField]
     private Story_UpdateType updateType = Story_UpdateType.Unable;
     public virtual void Update(out bool change) { change = false; }
+    public override void Update() { }
+    public virtual void PreloadUpdate() { }
     public override NodeType GetNodeType() { return NodeType.StoryNode; }
     public Story_UpdateType GetUpdateType() { return this.updateType; }
     void IStory.SetUpdateType(Story_UpdateType updateType) { this.updateType = updateType; }
+    public override void ReStruct() {
+        this.updateType = Story_UpdateType.Unable;
+    }
 }
 public abstract class NodeStatic : Node, INode
 {

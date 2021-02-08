@@ -32,14 +32,13 @@ public class StoryBlockEditor : NodeGraphEditor
                     ((INode)node).Update();
                 }
             }       
-            storyBlock.Intest = true;
         }
         
         if (storyBlock.Intest) {
             if (StaticPath.Story_DialogInfo.CurrentDialog != null) {
-                for (int i = 0; i < StaticPath.Story_DialogInfo.CurrentDialog.Content.Count; i++) {
-                    if (GUILayout.Button(StaticPath.Story_DialogInfo.CurrentDialog.Content[i], GUILayout.Width(600))) {
-                        StaticPath.Story_DialogInfo.CurrentDialog = StaticPath.Story_DialogInfo.CurrentDialog.GetDiaglog(i);
+                for (int i = 0; i < StaticPath.Story_DialogInfo.CurrentDialog.Count; i++) {
+                    if (GUILayout.Button(StaticPath.Story_DialogInfo.CurrentDialog[i], GUILayout.Width(600))) {
+                        StaticPath.Story_DialogInfo.CurrentDialog = StaticPath.Story_DialogInfo.CurrentDialog.GetDialog(i);
                         if (StaticPath.Story_DialogInfo.CurrentDialog == null) {
                             break;
                         }

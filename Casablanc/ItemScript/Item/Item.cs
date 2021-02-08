@@ -717,12 +717,12 @@ public interface Item_synchronization_Handler {
 }
 public interface Item_Element_Handler
 {
-    IEnumerator<Element> Elements { get; }
-    IEnumerator<Element> Liquid { get; }
-    IEnumerator<Element> Solid { get; }
-    IEnumerator<Element> Gas { get; }
-    IEnumerator<Element> Plasma { get; }
-    IEnumerator<Element> ElementMatch(Func<Element, bool> match);
+    IEnumerable<Element> Elements { get; }
+    IEnumerable<Element> Liquid { get; }
+    IEnumerable<Element> Solid { get; }
+    IEnumerable<Element> Gas { get; }
+    IEnumerable<Element> Plasma { get; }
+    IEnumerable<Element> ElementMatch(Func<Element, bool> match);
 }
 public interface Item_Rigid_Handler
 {
@@ -888,12 +888,12 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
 
 
     #region Element
-    IEnumerator<Element> Item_Element_Handler.Elements { get { foreach (var ele in this.Elements) { yield return ele; } } }
-    IEnumerator<Element> Item_Element_Handler.Liquid    => ElementMatch((var) => { return var.ElementState == ElementState.Liquid   ; });
-    IEnumerator<Element> Item_Element_Handler.Solid     => ElementMatch((var) => { return var.ElementState == ElementState.Solid    ; });
-    IEnumerator<Element> Item_Element_Handler.Gas       => ElementMatch((var) => { return var.ElementState == ElementState.Gas      ; });
-    IEnumerator<Element> Item_Element_Handler.Plasma    => ElementMatch((var) => { return var.ElementState == ElementState.Plasma   ; });
-    public IEnumerator<Element> ElementMatch(Func<Element, bool> match) {
+    IEnumerable<Element> Item_Element_Handler.Elements { get { foreach (var ele in this.Elements) { yield return ele; } } }
+    IEnumerable<Element> Item_Element_Handler.Liquid    => ElementMatch((var) => { return var.ElementState == ElementState.Liquid   ; });
+    IEnumerable<Element> Item_Element_Handler.Solid     => ElementMatch((var) => { return var.ElementState == ElementState.Solid    ; });
+    IEnumerable<Element> Item_Element_Handler.Gas       => ElementMatch((var) => { return var.ElementState == ElementState.Gas      ; });
+    IEnumerable<Element> Item_Element_Handler.Plasma    => ElementMatch((var) => { return var.ElementState == ElementState.Plasma   ; });
+    public IEnumerable<Element> ElementMatch(Func<Element, bool> match) {
         foreach(var ele in this.Elements) {
             if (match(ele)) {
                 yield return ele;

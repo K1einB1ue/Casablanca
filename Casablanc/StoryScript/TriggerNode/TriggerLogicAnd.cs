@@ -10,8 +10,10 @@ public class TriggerLogicAnd : NodeStatic
 
     public override object GetValue(NodePort port) {
         bool flag = true;
-        foreach (var p in this.Ports) {
-            flag = (bool)p.GetInputValue() && flag;
+        foreach (var PIN in this.DynamicInputs) {
+            if (PIN.fieldName.Contains("触发输入")) {
+                flag = (bool)PIN.GetInputValue() && flag;
+            }
         }
         return flag;
     }

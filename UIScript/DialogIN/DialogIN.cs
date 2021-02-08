@@ -7,7 +7,7 @@ public class DialogIN : MonoBehaviour
     public static DialogIN Instance;
     public List<GameObject> DialogNodes = new List<GameObject>();
     private void OnEnable() {
-        Instance = this;
+        Instance ??= this;
         NodesInit();
     }
     public void NodesInit() {
