@@ -9,30 +9,33 @@ public class DialogTestNode : NodeStatic
     private bool trigger = false;
 
     public override void Update() {
-            if (!this.StoryBlock.Intest) {
-                this.StoryBlock.Intest = true;
-                StaticPath.Story_DialogInfo.CurrentDialog = null;
-            }
-            if (!trigger) {
-                var Port = this.GetPort("对话测试");
-                if (Port.ConnectionCount > 0) {
-                    foreach (var Con in Port.GetConnections()) {
+        if (!this.StoryBlock.Intest) {
+            this.StoryBlock.Intest = true;
+            StaticPath.Story_DialogInfo.CurrentDialog = null;
+        }
+        if (!trigger) {
+            var Port = this.GetPort("对话测试");
+            if (Port.ConnectionCount > 0) {
+                foreach (var Con in Port.GetConnections()) {
+                    if (((INode)Con.node).GetNodeType() == NodeType.DialogNode) {
+                        trigger = true;
+                        ((IDialog)Con.node).SetUpdateType(Dialog_UpdateType.Enable);
                         if (Con.node.GetType() == typeof(DialogNode)) {
-                            trigger = true;
                             if (StaticPath.Story_DialogInfo.CurrentDialog == null) {
                                 StaticPath.Story_DialogInfo.CurrentDialog = (DialogNode)Con.node;
                             }
                             else {
-                                StaticPath.Story_DialogInfo.CurrentDialog = StaticPath.Story_DialogInfo.CurrentDialog.DialogGroupLize() + ((DialogNode)Con.node).DialogGroupLize();
+                                StaticPath.Story_DialogInfo.CurrentDialog = StaticPath.Story_DialogInfo.CurrentDialog.Combine((DialogNode)Con.node);
                             }
+                            ((DialogNode)Con.node).OnPreSelected();
                         }
-                        else {
-                            Debug.LogWarning("请连接正确的DialogNode");
-                        }
+                    }
+                    else {
+                        Debug.LogWarning("请连接正确的DialogNode");
                     }
                 }
             }
-        
+        }
     }
     public override NodeType GetNodeType() {
         return NodeType.TestNode;

@@ -59,118 +59,102 @@ public static class UIS
     }
 
     [UI(UI_TYPE.Static,0)]
-    public class ToolBar : UIStatic
+    public class ToolBar : UIBase
     {
-        public ToolBar() { }
 
+        private GameObject[] Frame, Num, Image;
+
+        public ToolBar() { }
+         
+
+        public override void Awake() {
+            string SonName = "Item";
+            this.Frame = new GameObject[7];
+            this.Num = new GameObject[7];
+            this.Image = new GameObject[7];
+            for (int i = 0; i < 7; i++) {
+                this.Frame[i] = this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Frame").gameObject;
+                this.Num[i] = this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").gameObject;
+                this.Image[i] = this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").gameObject;
+            }
+        }
         public override void update() {
             this.Enable(true);
             base.update();
         }
         public override void Update() {
             DrawBagImages();
-        }
-
-        void DrawBagImages() {
-            string SonName = "Item";
-            for (int i = 0; i < 7; i++) {
-                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Frame").gameObject.SetActive(CharacterManager.Main.Character_UI_Handler.Heldnum == i);
-                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").gameObject.SetActive(((ItemUI)CharacterManager.Main.Bag[i]).Displaycount());
-                this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Num").GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Bag[i]).GetUIheld().ToString();
-                if (CharacterManager.Main.Bag[i] != null) {
-                    if (CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid == null) {
-                        this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().color = new Color(1, 1, 1, 0);
-                    }
-                    else {
-                        this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().color = new Color(1, 1, 1, 1);
-                        if (CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid != null) {
-                            this.UIgraph.Instance.transform.Find("工具栏").Find(SonName + (i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    [UI(UI_TYPE.StaticSon,1,0)]
-    public class VITBar : UIStatic
-    {
-        public VITBar() { }
-
-        public override void update() {
-            this.Enable(true);
-            base.update();
-        }
-        public override void Update() {
             DrawVIT();
-        }
-
-        void DrawVIT() {
-
-            this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.PPrate * 50) / 50f;
-            
-        }
-    }
-    [UI(UI_TYPE.StaticSon,2,0)]
-    public class HPBar : UIStatic
-    {
-        public HPBar() { }
-
-        public override void update() {
-            this.Enable(true);
-            base.update();
-        }
-        public override void Update() {
             DrawHP();
         }
 
-        void DrawHP() {
-            this.UIgraph.Instance.transform.Find("血条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.HPrate * 50) / 50f;
-
-        }
-    }
-    [UI(UI_TYPE.StaticSon,3,0)]
-    public class GunBar : UIStatic
-    {
-        public GunBar() { }
-
-        public override void update() {
-            this.Enable(CharacterManager.Main.Held.Type == ItemType.Gun);
-            base.update();
-        }
-        public override void Update() {
-            this.DrawMagazine();
-        }
-        void DrawMagazine() {
-            List<Item> Magazines = ((Gun)CharacterManager.Main.Held).FindMarchMagazine();
-            if (Magazines != null) {
-                int Count = Magazines.Count >= 2 ? 2 : Magazines.Count;
-                for (int i = 1; i < 3; i++) {
-                    this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).gameObject.SetActive(i <= Count);
-                }
-                for (int i = 0; i <= Count; i++) {
-                    if (i == 0) {
-                        if (((Gun)CharacterManager.Main.Held).magazine != Items.Empty) {
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(true);
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Gun)CharacterManager.Main.Held).magazine.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)((Gun)CharacterManager.Main.Held).magazine).GetBulletRate();
-                        }
-                        else {
-                            this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(false);
-                        }
+        void DrawBagImages() {
+            for (int i = 0; i < 7; i++) {
+                Frame[i].SetActive(CharacterManager.Main.Character_UI_Handler.Heldnum == i);
+                Num[i].SetActive(((ItemUI)CharacterManager.Main.Bag[i]).Displaycount());
+                Num[i].GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Bag[i]).GetUIheld().ToString();
+                if (CharacterManager.Main.Bag[i] != null) {
+                    if (CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid == null) {
+                        Image[i].GetComponent<Image>().color = new Color(1, 1, 1, 0);
                     }
                     else {
-                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = Magazines[i - 1].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
-                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)Magazines[i - 1]).GetBulletRate();
+                        Image[i].GetComponent<Image>().color = new Color(1, 1, 1, 1);
+                        if (CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid != null) {
+                            Image[i].GetComponent<Image>().sprite = CharacterManager.Main.Bag[i].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+                        }
                     }
                 }
             }
-        }           
-        
+        }
 
-
+        void DrawVIT() {
+            this.UIgraph.Instance.transform.Find("体力条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.PPrate * 50) / 50f;
+        }
+        void DrawHP() {
+            this.UIgraph.Instance.transform.Find("血条").Find("Image").GetComponent<Image>().fillAmount = (int)(CharacterManager.Main.Info_Handler.HPrate * 50) / 50f;
+        }
     }
+
+    //[UI(UI_TYPE.StaticSon,3,0)]
+    //public class GunBar : UIBase
+    //{
+    //    public GunBar() { }
+
+    //    public override void update() {
+    //        this.Enable(CharacterManager.Main.Held.Type == ItemType.Gun);
+    //        base.update();
+    //    }
+    //    public override void Update() {
+    //        this.DrawMagazine();
+    //    }
+    //    void DrawMagazine() {
+    //        List<Item> Magazines = ((Gun)CharacterManager.Main.Held).FindMarchMagazine();
+    //        if (Magazines != null) {
+    //            int Count = Magazines.Count >= 2 ? 2 : Magazines.Count;
+    //            for (int i = 1; i < 3; i++) {
+    //                this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).gameObject.SetActive(i <= Count);
+    //            }
+    //            for (int i = 0; i <= Count; i++) {
+    //                if (i == 0) {
+    //                    if (((Gun)CharacterManager.Main.Held).magazine != Items.Empty) {
+    //                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(true);
+    //                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = ((Gun)CharacterManager.Main.Held).magazine.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+    //                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)((Gun)CharacterManager.Main.Held).magazine).GetBulletRate();
+    //                    }
+    //                    else {
+    //                        this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").gameObject.SetActive(false);
+    //                    }
+    //                }
+    //                else {
+    //                    this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").GetComponent<Image>().sprite = Magazines[i - 1].Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+    //                    this.UIgraph.Instance.transform.Find("弹夹条").Find((i + 1).ToString()).Find("Image").Find("Rate").GetComponent<Image>().fillAmount = ((UIMagazine)Magazines[i - 1]).GetBulletRate();
+    //                }
+    //            }
+    //        }
+    //    }           
+    //}
     [UI(UI_TYPE.Static,5)]
-    public class DialogBar : UIStatic
+    public class DialogBar : UIBase
     {
         public DialogBar() { }
 
@@ -190,12 +174,12 @@ public static class UIS
         }
     }
     [UI(UI_TYPE.Static,6)]
-    public class ItemIntro : UIStatic
+    public class ItemIntro : UIBase
     {
         public ItemIntro() { }
 
         public override void update() {
-            this.Enable(CharacterManager.Main.Character_UI_Handler.ItemSelect);
+            this.Enable(CharacterManager.Main.Character_UI_Handler.ObjectSelect != null);
             base.update();
         }
         public override void Update() {
@@ -203,11 +187,13 @@ public static class UIS
         }
 
         public void DrawFrame() {
-            this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround.Item_UI_Handler.CenterInScreen;
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround.Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
+            if (CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object is Item) {
+                this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = ((Item)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).Item_UI_Handler.CenterInScreen;
+                this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = ((Item)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
 
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("物品名").GetComponent<Text>().text = CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround.GetType().ToString();
-            this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("描述").GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Character_UI_Handler.ItemSelect.itemOntheGround).GetItemIntro().GetString();
+                this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("物品名").GetComponent<Text>().text = ((Item)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).GetType().ToString();
+                this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("描述").GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).GetItemIntro().GetString();
+            }
         }
     }
 
@@ -216,7 +202,7 @@ public static class UIS
 }
 
 [UI(UI_TYPE.Static,100)]
-public class DebugWindow : UIStatic
+public class DebugWindow : UIBase
 {
     private static StringBuilder stringBuilder = new StringBuilder();
     private Text Text;
@@ -265,7 +251,7 @@ public class DebugWindow : UIStatic
 
 
 }
-public abstract class UIStatic : UI, UIInit
+public abstract class UIBase : UI, UIInit
 {
     public int ID { get { return this.id; } }
     private int id = -1;
@@ -274,7 +260,7 @@ public abstract class UIStatic : UI, UIInit
     public UISetting UISetting = new UISetting();
     public UIGraph UIgraph;
 
-    public UIStatic() { }
+    public UIBase() { }
 
     public void Enable(bool index) {
         this.UIgraph.enable(index);//临时的

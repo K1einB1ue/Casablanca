@@ -27,7 +27,10 @@ public static class FindEx
             }
         }
         for (int i = 0; i < par.childCount; i++) {
-            return Find(par.GetChild(i), name);
+            Transform tmp = Find(par.GetChild(i), name);
+            if (tmp != null) {
+                return tmp;
+            }
         }
         return null;
     }
@@ -60,7 +63,10 @@ public static class FindEx
             }
         }
         for(int i = 0; i < par.childCount; i++) {
-            return par.GetChild(i).FindSon(match);
+            var tmp = par.GetChild(i).FindSon(match);
+            if (tmp != null) {
+                return tmp;
+            }
         }
         return null;
     }
@@ -71,7 +77,10 @@ public static class FindEx
             }
         }
         for (int i = 0; i < par.childCount; i++) {
-            return par.GetChild(i).FindSon(match);
+            var tmp = par.GetChild(i).FindSon(match);
+            if (tmp != null) {
+                return par.GetChild(i).FindSon(match);
+            }
         }
         return null;
     }
@@ -83,7 +92,10 @@ public static class FindEx
             }
         }
         for (int i = 0; i < par.childCount; i++) {
-            return FindSon(par.GetChild(i), name);
+            var tmp = par.GetChild(i).FindSon(name);
+            if (tmp != null) {
+                return tmp;
+            }
         }
         return null;
     }

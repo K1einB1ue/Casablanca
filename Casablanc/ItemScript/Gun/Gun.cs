@@ -13,6 +13,7 @@ public interface GunBool
 }
 public interface Gun
 {
+    GunState GunState { get; }
     int BulletKind { get; set; }
     Item magazine { get; set; }
     Item GetPushinMagazine(Item magazine);
@@ -21,7 +22,6 @@ public interface Gun
     Vector3 GetLinePointPos();
     Vector3 GetRandom();
     Vector3 GetParticle();
-    GunState GetGunState();
     void SetinitMagazine(Magazine magazine);
     void SetinitState(int BulletID);
     void update();
@@ -34,14 +34,7 @@ public interface Gun
 
 public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
 {
-    public Item magazine { 
-        get{
-            return this.ContainerState.Contents[0];
-        } 
-        set {
-            ((ScriptContainer)this).SetItem(0, value);
-        }
-    }
+    public Item magazine { get => this.Ex_GetItem(0); set => this.Ex_SetItem(0, value); }
 
     public int BulletKind
     {
@@ -52,11 +45,12 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
             this.GunState.BulletType = (BulletType)(value + 1);
         }
     }
-    public GunState GunState = new GunState();
-    public GunStatic():base(1){
-        initializeTimer();
-    }
+    public GunState GunState { get { gunState ??= new GunState(this); return gunState; } set => gunState = value; }
+    private GunState gunState;
 
+
+    public GunStatic():base(1){ }
+     
     public virtual void TryFire(){
         if (this.magazine != Items.Empty) {
             if (this.GunState.ShootMode == ShootMode.OneByOne) {
@@ -137,10 +131,10 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
             if (((Magazine)item).magazineState.BulletID == this.BulletKind&& ((GunBool)this).IsLegalMagazine(item)) {
                 if (this.magazine == Items.Empty) {
                     this.magazine = item;
-                    item.Destory();
-                    item.Item_Status_Handler.GetWays = GetWays.Tool;
+                    //item.Destory();
+                    //item.Item_Status_Handler.GetWays = GetWays.Tool;
                     itemoutEX = Items.Empty;
-                    this.UpdateDisplay();
+                    //this.UpdateDisplay();
                     return;
                 }
             }
@@ -160,11 +154,8 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
     public override void Use1() {
         TryFire();
     }
-    public void initializeTimer() {
-        this.Use1Timer.IntervalTime = 60 / this.GunState.Firing_Rate;
-    }
-    GunState Gun.GetGunState() {
-        return this.GunState;
+    public override void __TimerOverride(ActionTimer Use1, ActionTimer Use2, ActionTimer Use3, ActionTimer Use4, ActionTimer Use5, ActionTimer Use6) {
+        Use1.SetTimer(() => { return 60 / this.GunState.Firing_Rate; });
     }
     Vector3 Gun.GetRandom() {
         return new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));

@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEditor;
 
 public class ItemLoad :ScriptableObject
 {
@@ -40,6 +41,70 @@ public class ItemLoad :ScriptableObject
             else {
                 Debug.LogError("错误的物品请求");
                 return null;
+            }
+        }
+    }
+}
+
+
+public class ItemLoadEditorWindow : EditorWindow
+{
+    [MenuItem("物品/整体调整窗口")]
+    static void AddWindow() {
+        Rect rect = new Rect(0, 0, 500, 500);
+        ItemLoadEditorWindow window = (ItemLoadEditorWindow)EditorWindow.GetWindowWithRect(typeof(ItemLoadEditorWindow), rect, true, "物品整体调整窗口");
+        window.Show();
+    }
+
+    private void OnGUI() {
+        if(GUILayout.Button("重置物品动态加载区")) {
+            foreach(var load in StaticPath.ItemLoad.itemlist) {
+                if (load != null) {
+                    if (load.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping != null) {
+                        load.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping = new ItemContextMapping();
+                    }
+                    if (load.ItemStaticProperties.ItemStaticValues.ItemStaticContext != null) {
+                        load.ItemStaticProperties.ItemStaticValues.ItemStaticContext = new ItemStaticProperties.ItemStaticContext();
+                    }
+                }
+            }
+            Debug.Log("重置成功!");
+        }
+    }
+}
+
+public class GameObjectEditorWindow : EditorWindow
+{
+    public static string x = "X", y = "Y", z = "Z";
+    public static string Name = "Empty";
+    [MenuItem("变换/子物品调整窗口")]
+    static void AddWindow() {
+        Rect rect = new Rect(0, 0, 500, 500);
+        GameObjectEditorWindow window = (GameObjectEditorWindow)EditorWindow.GetWindowWithRect(typeof(GameObjectEditorWindow), rect, true, "物品整体调整窗口");
+        window.Show();
+    }
+
+    private void OnGUI() {
+        x = GUILayout.TextField(x);
+        y = GUILayout.TextField(y);
+        z = GUILayout.TextField(z);
+        if (GUILayout.Button("变换")) {
+            if(Selection.activeObject is GameObject) {
+                foreach (var tran in ((GameObject)Selection.activeObject).transform.GetSons()) {
+                    Vector3 temp = new Vector3();
+                    temp.x = tran.position.x + float.Parse(x);
+                    temp.y = tran.position.x + float.Parse(y);
+                    temp.z = tran.position.x + float.Parse(z);
+                    tran.position = temp;
+                }
+            }          
+        }
+        Name = GUILayout.TextField(Name);
+        if (GUILayout.Button("更改名字")) {
+            if (Selection.activeObject is GameObject) {
+                foreach (var tran in ((GameObject)Selection.activeObject).transform.GetSons()) {
+                    tran.name = Name;
+                }
             }
         }
     }

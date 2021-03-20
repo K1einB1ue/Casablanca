@@ -45,6 +45,18 @@ public class ItemNodeStatic : ScriptableObject, ItemNode
 
         return item;
     }
+    public (ItemType, int) GetItemTypeAndItemId() {
+        if (this.ItemStaticInfoPackage.itemStaticDescribeWays == ItemStaticDescribeWays.ItemStroe) {
+            return (this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStore.ItemStaticProperties.ItemID);
+        }
+        else if (this.ItemStaticInfoPackage.itemStaticDescribeWays == ItemStaticDescribeWays.ItemTypeAndID) {
+            return (this.ItemStaticInfoPackage.ItemStaticProperties.ItemType, this.ItemStaticInfoPackage.ItemStaticProperties.ItemID);
+        }
+        else {
+            Debug.LogWarning("错误");
+            return (ItemType.Error, 0);
+        }
+    }
     public Item GetContainer() {
 
         Item container = this.GetItem();
@@ -93,21 +105,8 @@ public class ItemNodeDynamic: ItemNode
 
     public Item GetItem() {
 
-        ItemType itemType = ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
-        {
-            RuntimeProperty_Detail_Info.Properties => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType,
-            RuntimeProperty_Detail_Info.Store => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemType,
-            _ => ItemType.Error,
-        };
-        int itemID = ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
-        {
-            RuntimeProperty_Detail_Info.Properties => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID,
-            RuntimeProperty_Detail_Info.Store => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemID,
-            _ => 0,
-        };
-
-        Item item = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(itemType, itemID/*this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID*/);
-
+      
+        Item item = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(this.GetItemTypeAndItemId().Item1,this.GetItemTypeAndItemId().Item2/*this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType, this.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID*/);
         item.Info_Handler.Binding(new Item_Property(this.ItemRuntimeInfoPackage.ItemRuntimeProperties));
         return item;
     }
@@ -143,7 +142,22 @@ public class ItemNodeDynamic: ItemNode
         }
         return container;
     }
-
+    public (ItemType, int) GetItemTypeAndItemId() {
+        if(ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info== RuntimeProperty_Detail_Info.Store&& ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore == null) {
+            return (ItemType.Empty, 0);
+        }
+        ItemType itemType = ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch {
+            RuntimeProperty_Detail_Info.Properties => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType,
+            RuntimeProperty_Detail_Info.Store => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemType,
+            _ => ItemType.Error,
+        };
+        int itemID = ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch {
+            RuntimeProperty_Detail_Info.Properties => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID,
+            RuntimeProperty_Detail_Info.Store => ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemID,
+            _ => 0,
+        };
+        return (itemType, itemID);
+    }
 }
 
 public enum ItemStaticDescribeWays
@@ -179,7 +193,7 @@ public class ItemRuntimeInfoPackage
     public ItemRuntimeProperties.ItemRuntimeProperties ItemRuntimeProperties;
 
     public ItemRuntimeInfoPackage(Item item) {
-        ItemRuntimeProperties = item.GetItemProperty().ItemRuntimeProperties;
+        ItemRuntimeProperties = item.Info_Handler.Item_Property.ItemRuntimeProperties;
     }
 }
 [Serializable]

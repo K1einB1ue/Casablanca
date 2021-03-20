@@ -14,15 +14,9 @@ public static class AllGun
 
 
             this.GunState.BulletType = BulletType.B7_62;
-            this.GunState.SmokeType = 1;
             this.GunState.MagazineTypes = new List<int>() { 2 };
 
 
-            this.GunState.Firing_Dmg = 20;
-            this.GunState.Firing_Rate = 650;
-            this.GunState.Firing_Shift = 0.5f;
-            this.GunState.Firing_Force = 2000;
-            this.initializeTimer();
 
         }
        
@@ -37,15 +31,9 @@ public static class AllGun
 
 
             this.GunState.BulletType = BulletType.B7_62;
-            this.GunState.SmokeType = 1;
             this.GunState.MagazineTypes = new List<int>() { 2 };
 
 
-            this.GunState.Firing_Dmg = 33;
-            this.GunState.Firing_Rate = 25;
-            this.GunState.Firing_Shift = 0.5f;
-            this.GunState.Firing_Force = 4000;
-            this.initializeTimer();
         }
 
     }
@@ -55,8 +43,9 @@ public static class AllGun
 
 
 
-public class GunState
+public class GunState : StateBase
 {
+    public GunState(Item item) : base(item) { }
     /// <summary>
     /// 也就是弹夹的ID
     /// </summary>
@@ -70,12 +59,18 @@ public class GunState
     /// </summary>
     public ShootMode ShootMode = ShootMode.OneByOne;
 
-    public int ShootBulletNum = 1;
-    public int SmokeType = 1;
-    public float Firing_Rate = 600;
-    public float Firing_Dmg = 20;
-    public float Firing_Shift = 0.5f;
-    public float Firing_Force = 200f;
+    [LoadProperties(PropertyType.Static)]
+    public int ShootBulletNum { get => (int)This.Get(nameof(ShootBulletNum)); set => This.Set(nameof(ShootBulletNum), value); }
+    [LoadProperties(PropertyType.Static)]
+    public int SmokeType { get => (int)This.Get(nameof(SmokeType)); set => This.Set(nameof(SmokeType), value); }
+    [LoadProperties(PropertyType.Static)]
+    public float Firing_Rate { get => (float)This.Get(nameof(Firing_Rate)); set => This.Set(nameof(Firing_Rate), value); }
+    [LoadProperties(PropertyType.Static)]
+    public float Firing_Dmg { get => (float)This.Get(nameof(Firing_Dmg)); set => This.Set(nameof(Firing_Dmg), value); }
+    [LoadProperties(PropertyType.Static)]
+    public float Firing_Shift { get => (float)This.Get(nameof(Firing_Shift)); set => This.Set(nameof(Firing_Shift), value); }
+    [LoadProperties(PropertyType.Static)]
+    public float Firing_Force { get => (float)This.Get(nameof(Firing_Force)); set => This.Set(nameof(Firing_Force), value); }
 }
 public enum ShootMode
 {

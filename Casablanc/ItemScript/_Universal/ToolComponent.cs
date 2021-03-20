@@ -45,4 +45,66 @@ public static class ToolComponent
         RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
     }
 
+    public static void ActiveLikeADoor(this Door door) {
+        AnimatorStateInfo info = door.Animator.GetCurrentAnimatorStateInfo(0);
+
+        if (info.normalizedTime >= 0.1f) {
+            if (!door.Animator.GetBool("Open")) {
+                door.Animator.SetBool("Open", true);
+                door.DoorState.Open = true;
+            }
+            else {
+                door.Animator.SetBool("Open", false);
+                door.DoorState.Open = false;
+            }
+        }
+    }
+
+    public static void ActiveLikeADoorWithALock(this Door door,int LockPos, Item item, out Item itemoutEX) {
+        
+
+        if (item is Lock) {
+            if (!((Lock)item).LockState.Locking) {
+                ((Container)door).Ex_SetItem(LockPos, item);
+                itemoutEX = Items.Empty;
+            }
+            else {
+                Debug.Log("这把锁 已经锁上了 无法套上去");
+                itemoutEX = item;
+            }
+        }
+        else {
+            if (((Container)door).Ex_GetItem(LockPos) != Items.Empty) {
+                if (((Lock)((Container)door).Ex_GetItem(LockPos)).LockState.Locking) {
+                    itemoutEX = item;
+                    
+                }
+                else {
+                    door.UseInvoke(6);
+                    itemoutEX = item;
+                }
+            }
+            else {
+                door.UseInvoke(6);
+                itemoutEX = item;
+            }
+        }
+    }
+
+}
+
+public static class ContainerEx
+{
+    public static void Ex_SetItem(this Container container, int Pos, Item item) {
+        if (item.Instance) {
+            item.Destory();
+        }
+        container.SetItem(Pos, item);
+    }
+    public static Item Ex_GetItem(this Container container, int Pos) {
+        if (container.GetContainerState() == null) {
+            ((ScriptContainer)container).SetContainerState(new ContainerState(container.Size));
+        }
+        return container[Pos];
+    }
 }

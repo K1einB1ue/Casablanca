@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,11 +23,17 @@ public sealed class StaticRun
         }
     }
 
+
+
+
+
+
     /// <summary>
     /// 反射初始化,构造函数字典,静态属性映射.
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-    public static void StaticInit() {
+    public static void StaticInit() {    
+
         //物品系统注册表初始化
         ItemRegister.ItemRegisterList();
         //角色系统注册表初始化
@@ -48,7 +56,14 @@ public sealed class StaticRun
 
         SingletonMono<EffectManager>        .Singleton_Mono_initialize();
         SingletonMono<CoverManager>         .Singleton_Mono_initialize();
-        
+
+    #region 频道区
+        WeatherChannelManager               .Singleton_Mono_initialize();
+        TimeChannelManager                  .Singleton_Mono_initialize();
+        StoryChannelManager                 .Singleton_Mono_initialize();
+
+
+    #endregion 
 
         //未实现
         SingletonMono<ThermodynamicsManager>   .Singleton_Mono_initialize();
@@ -88,5 +103,39 @@ public sealed class StaticRun
         //HashMono.MonoRemove();
     }
 
+
+
+
+
+
+
+
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+    public static void UnityCodeInit() {
+        StaticCheck();
+    }
+    /// <summary>
+    /// 编辑器阶段才会使用的代码,确保代码的完整性
+    /// </summary>
+    [Conditional("UNITY_EDITOR")]
+    public static void StaticCheck() {
+
+    }
+
+
+    #region Check
+
+
+
+
+
+
+
+
+
+    #endregion
 }
+
+
 

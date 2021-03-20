@@ -1,19 +1,27 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using XNode;
+
+
 [CreateAssetMenu(fileName ="新故事图",menuName ="剧情/故事块")]
 public class StoryBlock : NodeBlockBase
 {
+    /// <summary>
+    /// 编辑器使用
+    /// </summary>
     [HideInInspector]
     public bool Intest = false;
+
+
+
+
+
+
     private bool ContinueUpdate = false;
-    [HideInInspector]
+    [NonSerialized]
     public bool LoadEntry = false;
-    [HideInInspector]
-    public int Hash = -1;
-    public static HashGenerator NodeHash = new HashGenerator();
-    public List<StoryNode> ActiveNode = new List<StoryNode>();
 
     public HashSet<StoryEntryNode> StoryEntryNodes=new HashSet<StoryEntryNode>();
     public HashSet<StoryExitNode> storyExitNodes=new HashSet<StoryExitNode>();
@@ -23,18 +31,13 @@ public class StoryBlock : NodeBlockBase
 
 
 
-    public void LoadStoryNode(StoryNode storyNode) {
-        storyNode.Hash = NodeHash.GetHash();
-        this.StoryNodes[storyNode.Hash] = storyNode;
-    }
-    public void LoadoffStoryNode(StoryNode storyNode) {
-        this.StoryNodes[storyNode.Hash] = null;
-        NodeHash.DisHash(storyNode.Hash);
-        storyNode.Hash = -1;
-    }
+
+
+
+
 
     public override void Update() {
-        BeforeUpdate();
+        this.UpdateStoryNodes();
         base.Update();
     }
     public override void StaticUpdate() {
@@ -57,7 +60,11 @@ public class StoryBlock : NodeBlockBase
         } 
         while (ContinueUpdate);
     }
-
+    public override void ReStruct() {
+        foreach (var node in this.nodes) {
+            ((INode)node).ReStruct();
+        }
+    }
     private void BeforeUpdate() {
         if (!LoadEntry) {
             foreach (var nodeEntry in StoryEntryNodes) {

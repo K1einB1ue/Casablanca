@@ -3,39 +3,151 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Events;
 using XNode;
 using XNodeEditor;
 
 
-
+[NodeWidth(300)]
 public class DialogNode : DialogNodeStatic, Dialog
 {
-    [Input(connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public Link_Dialog                            @前置对话;
-    [Output(dynamicPortList =true,connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public Link_Dialog     @后触对话;
-    [TextArea]
-    public List<string> Content=new List<string>();
-    [Input(connectionType = ConnectionType.Override, typeConstraint = TypeConstraint.Strict)] public StateMachineInterface                  @状态机;
+    [Input(connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public string                                  @前置对话;
+    [TextArea(4, 20)]
+    [Output(dynamicPortList =true,connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public List<string>     @后触对话;
+    
+    [Input(connectionType = ConnectionType.Override, typeConstraint = TypeConstraint.Strict)] public Link_DialogMachine                  @对话状态机;
+    [Output(connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public Link_DialogMachine                 @对话状态机_;
+    [Input(connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public Link_DialogMachineGroup             @涌现状态机;
+    [Output(connectionType = ConnectionType.Multiple, typeConstraint = TypeConstraint.Strict)] public Link_DialogMachineGroup            @涌现状态机_;
 
+
+
+   
+
+    public DialogMachine DialogMachine {
+        get {
+            if (this.GetPort(nameof(对话状态机)).ConnectionCount > 0) {
+                return (DialogMachine)this.GetPort(nameof(对话状态机)).Connection.GetOutputValue();
+            }
+            return null;
+        }
+    }
+
+    public DialogMachineGroup DialogMachineGroup {
+        get {
+            DialogMachineGroup dialogMachineGroup = null;
+            foreach (var Port in this.GetPort(nameof(涌现状态机)).GetConnections()) {
+                if (Port.GetOutputValue() is DialogMachine) {
+                    dialogMachineGroup ??= new DialogMachineGroup();
+                    dialogMachineGroup.PackUp((DialogMachine)Port.GetOutputValue());
+                }
+                else if (Port.GetOutputValue() is DialogMachineGroup) {
+                    if (dialogMachineGroup != null) {
+                        Debug.LogError("错误的链接方式");
+                    }
+                    return ((DialogMachineGroup)Port.GetOutputValue());
+                }
+            }
+            return dialogMachineGroup;
+        }
+    }
     public Dialog GetDialog(int num) {
+        this.SelectDialog(num);
         return new DialogGroup(DialogGroup.GetDialogs(this, num));
+    }
+    public void SelectDialog(int num) {
+        DialogGroup.SelectDialog(this, num);
     }
     public string this[int x] { 
         get {
-            return Content[x];
+            return 后触对话[x];
         }
         set {
-            Content[x] = value;
+            后触对话[x] = value;
         } 
     }
-    public int Count => Content.Count;
+    public int Count => 后触对话.Count;
 
     public DialogGroup DialogGroupLize() {
         return new DialogGroup(this.GetDialogs());
     }
+    public void OnPreSelected() {
+        if (DialogMachineGroup!=null) {
+            if (StoryChannelManager.Instance) {
+                StoryChannelManager.Instance.InfoChannel.EnableANode(this);
+            }
+            
+        }
+        if (((IDialog)this).GetUpdateType() == Dialog_UpdateType.Unable) {
+            ((IDialog)this).SetUpdateType(Dialog_UpdateType.PreEnable);
+        }
+    }
 
+    public override object GetValue(NodePort port) {
+        if (port.fieldName == nameof(对话状态机_)) {
+            if (this.GetPort(nameof(对话状态机)).ConnectionCount > 0) {
+                return this.GetPort(nameof(对话状态机)).Connection.GetOutputValue();
+            }
+        }
+        else if (port.fieldName == nameof(涌现状态机_)) {
+            if (this.GetPort(nameof(涌现状态机)).ConnectionCount > 0) {
+                DialogMachineGroup dialogMachineGroup = null;
+                foreach (var Port in this.GetPort(nameof(涌现状态机)).GetConnections()) {                 
+                    if(Port.GetOutputValue() is DialogMachine) {
+                        dialogMachineGroup ??= new DialogMachineGroup();
+                        dialogMachineGroup.PackUp((DialogMachine)Port.GetOutputValue());
+                    }
+                    else if(Port.GetOutputValue() is DialogMachineGroup) {
+                        if (dialogMachineGroup != null) {
+                            Debug.LogError("错误的链接方式");
+                        }
+                        return Port.GetOutputValue();
+                    }
+                }
+                return dialogMachineGroup;
+            }
+        }
+        return null;
+    }
+
+    public override void OnCreateConnection(NodePort from, NodePort to) {
+        this.Rename();
+    }
+    public override void OnRemoveConnection(NodePort port) {
+        this.Rename();
+    }
+    public override void ReStruct() {
+        base.ReStruct();
+        this.Rename();
+    }
+    private void Rename() {
+        this.name = "NULL";
+        if (this.GetPort(nameof(对话状态机)).ConnectionCount > 0) {
+            if (this.GetPort(nameof(对话状态机)).Connection.GetOutputValue() != null) {
+                this.name = ((DialogMachine)this.GetPort(nameof(对话状态机)).Connection.GetOutputValue()).name;
+            }
+        }
+        if (this.GetPort(nameof(涌现状态机)).ConnectionCount > 0) {
+            DialogMachineGroup dialogMachineGroup = null;
+            foreach (var Port in this.GetPort(nameof(涌现状态机)).GetConnections()) {
+                if (Port.GetOutputValue() is DialogMachine) {
+                    dialogMachineGroup ??= new DialogMachineGroup();
+                    dialogMachineGroup.PackUp((DialogMachine)Port.GetOutputValue());
+                }
+                else if (Port.GetOutputValue() is DialogMachineGroup) {
+                    if (dialogMachineGroup != null) {
+                        Debug.LogError("错误的链接方式");
+                    }
+                    this.name += ((DialogMachineGroup)Port.GetOutputValue()).ToString();
+                    return;
+                }
+            }
+            this.name += dialogMachineGroup.ToString();
+        }
+    }
 }
 
-public class DialogGroup : IEnumerable, Dialog
+public class DialogGroup : ScriptableObject, IEnumerable, Dialog
 {
     public int Count {
         get {
@@ -69,25 +181,58 @@ public class DialogGroup : IEnumerable, Dialog
     }
     public Dialog GetDialog(int num) {   
         int i = 0;
-        while (num > dialogNodes[i].Content.Count - 1) {
-            num = num - dialogNodes[i++].Content.Count;
+        while (num > dialogNodes[i].后触对话.Count - 1) {
+            num = num - dialogNodes[i++].后触对话.Count;
         }
 
         return new DialogGroup(GetDialogs(dialogNodes[i], num));
-    } 
+    }
+    public void SelectDialog(int num) {
+        int i = 0;
+        while (num > dialogNodes[i].后触对话.Count - 1) {
+            num = num - dialogNodes[i++].后触对话.Count;
+        }
 
+        SelectDialog(dialogNodes[i], num);
+    }
+    public static void SelectDialog(DialogNode Dialognode, int num) {
+        stringBuilder.Clear();
+        stringBuilder.Append("后触对话 ");
+        stringBuilder.Append(num.ToString());
+
+        StoryChannelManager.SelectDialogEvent?.Invoke(Dialognode.后触对话[num]);
+
+        var Port = Dialognode.GetPort(stringBuilder.ToString());
+        if (Port.ConnectionCount > 0) {
+            foreach (var Con in Port.GetConnections()) {
+                var Node = Con.node;
+                if (((INode)Node).GetNodeType() == NodeType.DialogNode) {
+                    ((IDialog)Node).SetUpdateType(Dialog_UpdateType.Enable);
+                    if (Node.GetType() == typeof(DialogNode)) {
+                        ((DialogNode)Node).OnPreSelected();
+                    }
+                    if (Node.GetType() == typeof(DialogTriggerNode)) {
+                        Dialognode.StoryBlock.UpdateStoryNodes();
+                    }
+                }
+                else {
+                    throw new Exception("错误的剧情节点连接!");
+                }
+            }
+        }
+    }
     public string this[int x] { 
         get {
             int i = 0;
-            while (x > dialogNodes[i].Content.Count - 1) {
-                x = x - dialogNodes[i++].Content.Count;
+            while (x > dialogNodes[i].后触对话.Count - 1) {
+                x = x - dialogNodes[i++].后触对话.Count;
             }
             return dialogNodes[i][x];
         } 
         set {
             int i = 0;
-            while (x > dialogNodes[i].Content.Count - 1) {
-                x = x - dialogNodes[i++].Content.Count;
+            while (x > dialogNodes[i].后触对话.Count - 1) {
+                x = x - dialogNodes[i++].后触对话.Count;
             }
             dialogNodes[i][x] = value;
         }
@@ -104,7 +249,7 @@ public class DialogGroup : IEnumerable, Dialog
                 if (((INode)Node).GetNodeType() == NodeType.DialogNode) {
                     ((IDialog)Node).SetUpdateType(Dialog_UpdateType.Enable);
                     if (Node.GetType() == typeof(DialogNode)) {
-                        yield return (DialogNode)Node;
+                        yield return (DialogNode)Node; 
                     }
                     if (Node.GetType() == typeof(DialogTriggerNode)) {
                         Dialognode.StoryBlock.UpdateStoryNodes();
@@ -116,6 +261,7 @@ public class DialogGroup : IEnumerable, Dialog
             }
         }
     }
+
     
     
 
@@ -147,45 +293,28 @@ public static class DialogNodeEx
 public interface Dialog
 {
     Dialog GetDialog(int num);
+    void SelectDialog(int num);
     string this[int x] { get; set; }
     int Count { get; }
     DialogGroup DialogGroupLize();
 }
 
-
-
-
-
-
-[CustomNodeEditor(typeof(DialogNode))]
-public class DialogNodeEditor : NodeEditor
+public static class DialogEx
 {
-    public static StringBuilder StringBuilder = new StringBuilder();
-    public static List<string> PortsHas = new List<string>();
-    public override void OnBodyGUI() {
-        DialogNode node = target as DialogNode;
-        base.OnBodyGUI();
-        StringBuilder.Clear();
-        foreach (NodePort nodePort in node.DynamicOutputs) {
-            PortsHas.Add(nodePort.fieldName);
+    public static Dialog Combine(this Dialog dialog,params Dialog[] dialogs) {
+        var temp = dialog.DialogGroupLize();
+        for (int i = 0; i < dialogs.Length; i++) {
+            temp = (temp + dialogs[i].DialogGroupLize()).DialogGroupLize();
         }
-        for (int i = 0; i < node.Content.Count; i++) {
-            StringBuilder.Clear();
-            StringBuilder.Append("后触对话 ");
-            StringBuilder.Append(i.ToString());
-            if (!PortsHas.Remove(StringBuilder.ToString())) {
-                node.AddDynamicOutput(typeof(DialogNode), Node.ConnectionType.Override, Node.TypeConstraint.Strict, StringBuilder.ToString());
-            }
-        }
-        if (PortsHas.Count > 0) {
-            for (int i = PortsHas.Count - 1; i > 0; i--) {
-                node.RemoveDynamicPort(PortsHas[i]);
-                PortsHas.RemoveAt(i);
-            }
-        }
-
+        return temp;
     }
+
 }
+
+
+
+
+
 
 
 
@@ -212,14 +341,18 @@ public abstract class DialogNodeStatic : NodeStatic,IDialog
 
 public enum Dialog_UpdateType {
     Unable,
-    Enable
+    Enable,
+    PreEnable,
 }
 
 [Serializable]
 public class Link_Dialog { }
 
 [Serializable]
-public class StateMachineInterface {
-    
+public class Link_DialogMachine { }
 
-}
+[Serializable]
+public class Link_DialogMachineGroup { }
+
+[Serializable]
+public class Link_NodePatch { }

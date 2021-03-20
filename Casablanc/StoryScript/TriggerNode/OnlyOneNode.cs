@@ -10,7 +10,7 @@ public class OnlyOneNode : NodeStatic
 {
     [Input(connectionType = ConnectionType.Override, backingValue = ShowBackingValue.Never,dynamicPortList = true)] public bool @触发输入;
     [Output(connectionType = ConnectionType.Multiple, dynamicPortList = true)]                                      public bool @触发输出;
-    public int EnableNum = 1;
+    public int EnableNum = 1;  
     public List<int> EnableList = new List<int>();
     public static StringBuilder stringBuilder = new StringBuilder();
 

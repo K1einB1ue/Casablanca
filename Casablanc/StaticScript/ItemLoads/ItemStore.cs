@@ -14,19 +14,3 @@ public class ItemStore : ScriptableObject
     public ItemStaticProperties.ItemStaticProperties ItemStaticProperties;
 
 }
-
-//[CustomEditor(typeof(ItemStore))]
-//public class ItemStoreEditor : Editor
-//{
-//    public override void OnInspectorGUI() {
-//        var ele = serializedObject.FindProperty("ItemStaticProperties").FindPropertyRelative("ItemStaticValues").FindPropertyRelative("StaticValues_Element");
-
-
-//        EditorGUI.BeginChangeCheck();
-//        EditorGUILayout.PropertyField(ele);
-
-//        if (EditorGUI.EndChangeCheck()) {
-//            serializedObject.ApplyModifiedProperties();
-//        }
-//    }
-//}

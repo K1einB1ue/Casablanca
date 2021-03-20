@@ -6,19 +6,22 @@ public static class AllLock {
 
 
     [Item(ItemType.Tool, 1)]
-    public class DoorLock : LockStatic
+    public class NormalLock : LockStatic
     {
-        /*
-        public DoorLock() : base((int)ItemType.Tool, 1) {
-            this.ItemStateBool.Displayable = true;
+        public NormalLock() { }
+
+        public override bool CanGetNormally => !((this.Outercontainer is Door) && this.LockState.Locking);
+        public override void Use6(Item item, out Item itemoutEX) {
+            if (!this.LockState.Locking) {
+                if (item == Items.Empty) {
+                    this.LockState.Locking = true;
+                }
+            }
+            else if (this.LockState.Locking) {
+                Debug.Log("钥匙未实现");
+            }
+            itemoutEX = item;
         }
-        */
-        /*
-        static DoorLock() {
-            Items.AddGen<DoorLock>(ItemType.Tool, 1);
-        }
-        */
-        public DoorLock() {}
 
     }
 

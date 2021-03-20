@@ -7,15 +7,15 @@ using UnityEngine;
 using UnityEngine.Events;
 
 
-public class InputBase : Channel, Input_Interface
+public class InputBase : Channel, InputInterface
 {
-    Input_Property Input_Interface.Input_Property => this.input_Property;
+    Input_Property InputInterface.Input_Property => this.input_Property;
     public Input_Property input_Property = new Input_Property();
-    RaycastHit Input_Interface.RaycastHit => this.RaycastHit;
-    protected RaycastHit RaycastHit;   
-    int Input_Interface.RaycastMask { get => Mask; set => Mask = value; }
+    RaycastHit[] InputInterface.RaycastHit => this.RaycastHit;
+    protected RaycastHit[] RaycastHit;   
+    int InputInterface.RaycastMask { get => Mask; set => Mask = value; }
     protected int Mask = ~0;
-    bool Input_Interface.Hit => hit;
+    bool InputInterface.Hit => hit;
     protected bool hit = false;
 
 
@@ -45,12 +45,11 @@ public class InputBase : Channel, Input_Interface
     protected InputTriggerEvent WheelUpEvent                         = new InputTriggerEvent();
     protected InputTriggerEvent WheelDownEvent                       = new InputTriggerEvent();
 
-    public override void onEnable() {
-    }
+    public override void onEnable() { }
 
 
 
-    public void RegisteInput(UnityAction unityAction, InputType inputType,bool Add=true) {
+    public virtual void RegisteInput(UnityAction unityAction, InputType inputType,bool Add=true) {
         if (Add) {
             switch (inputType) 
             { 
@@ -58,8 +57,8 @@ public class InputBase : Channel, Input_Interface
                 case InputType.MoveLeft:                                                MoveLeftEvent.AddListener(unityAction);break;
                 case InputType.MoveRight:                                               MoveRightEvent.AddListener(unityAction);break;
                 case InputType.MoveDown:                                                MoveDownEvent.AddListener(unityAction);break;
-                case InputType.GetUpThingsByRay:                                GetUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
-                case InputType.UseUpThingsByRay:                                UseUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
+                case InputType.GetUpThingsByRay:                                        GetUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
+                case InputType.UseUpThingsByRay:                                        UseUpThingsInUpdateByRayEvent.AddListener(unityAction);break;
                 case InputType.DropItem:                                                DropItemEvent.AddListener(unityAction);break;                
                 case InputType.Run:                                                     RunEvent.AddListener(unityAction); break;
                 case InputType.Use1:                                                    Use1Event.AddListener(unityAction); break;
@@ -85,8 +84,8 @@ public class InputBase : Channel, Input_Interface
                 case InputType.MoveLeft:                                                MoveLeftEvent.RemoveListener(unityAction); break;
                 case InputType.MoveRight:                                               MoveRightEvent.RemoveListener(unityAction); break;
                 case InputType.MoveDown:                                                MoveDownEvent.RemoveListener(unityAction); break;
-                case InputType.GetUpThingsByRay:                                GetUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
-                case InputType.UseUpThingsByRay:                                UseUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
+                case InputType.GetUpThingsByRay:                                        GetUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
+                case InputType.UseUpThingsByRay:                                        UseUpThingsInUpdateByRayEvent.RemoveListener(unityAction); break;
                 case InputType.DropItem:                                                DropItemEvent.RemoveListener(unityAction); break;
                 case InputType.Run:                                                     RunEvent.RemoveListener(unityAction); break;
                 case InputType.Use1:                                                    Use1Event.RemoveListener(unityAction); break;
@@ -113,8 +112,19 @@ public class InputBase : Channel, Input_Interface
             switch (inputType) {
                 case InputType.K:                                                       K_Event.AddListener(unityAction);break;
                 case InputType.Use:                                                     Use_Event.AddListener(unityAction);break;
+                default:                                                                Debug.Log("没有该种Input的事件注册"); break;
             }
         }
+    }
+}
+public abstract class InfoChannel : Channel
+{
+    public bool Change = true;
+    public bool ContinuousChange = false;
+    public override void onDisable() {
+        Change = true;
+        ContinuousChange = false;
+        
     }
 }
 public abstract class Channel : MonoScriptableObject { }
@@ -126,9 +136,8 @@ public abstract class MonoScriptableObject : ScriptableObject, IScriptable_Mono
         ScriptobjectManager.scriptable_Monos.Add(this);
         this.onEnable();
     }
-    private void OnDisable() { }
     public virtual void onEnable() { }
-
+    //通过接口触发 不需要更多引用
     public virtual void onDisable() { }
 
     public virtual void FixedUpdate() { }
@@ -136,10 +145,10 @@ public abstract class MonoScriptableObject : ScriptableObject, IScriptable_Mono
     public virtual void Start() { }
 }
 
-public interface Input_Interface {
+public interface InputInterface {
     int RaycastMask { get; set; }
     Input_Property Input_Property { get; }
-    RaycastHit RaycastHit { get; }
+    RaycastHit[] RaycastHit { get; }
     bool Hit { get; }
     void RegisteInput(UnityAction unityAction, InputType inputType, bool Add = true);
     void RegisteInput(UnityAction<int> unityAction, InputType inputType, bool Add = true);
@@ -189,6 +198,7 @@ namespace InputRuntimeProperties
         [Serializable]
         public class RuntimeValues_State
         {
+            public static RuntimeValues_State Default = new RuntimeValues_State() { W = false, A = false, S = false, D = false };
             public bool W;
             public bool A;
             public bool S;

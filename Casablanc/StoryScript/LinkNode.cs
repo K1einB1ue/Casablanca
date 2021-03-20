@@ -14,7 +14,13 @@ public class LinkNode : StoryNodeBase
 		if (((IStory)this).GetUpdateType() == Story_UpdateType.PreEnable) { 
 			((IStory)this).SetUpdateType(Story_UpdateType.Disable);
 			foreach (var PIN in Outputs) {
-
+				if(PIN.Connection.ConnectionCount > 0) {
+					foreach(var Port in PIN.GetConnections()) {
+						if(Port.node is DialogNode) {
+							((DialogNode)Port.node).OnPreSelected();
+                        }
+                    }
+                }
 			}
 		}
 	}

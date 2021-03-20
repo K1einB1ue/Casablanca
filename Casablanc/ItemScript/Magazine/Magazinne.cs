@@ -125,6 +125,9 @@ public class MagazineStatic : ContainerStatic, Magazine, UIMagazine
     public override void Use3() {
         this.TryLoad();
     }
+    public override void OnAttach() {
+        this.Item_Status_Handler.GetWays = GetWays.Tool; 
+    }
 }
 
 public class MagazineState

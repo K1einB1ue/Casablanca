@@ -60,34 +60,8 @@ public class StoryNode : StoryNodeBase
     }
 
     public override void Update() {
-        bool flag = true;
-        if (((IStory)this).GetUpdateType() == Story_UpdateType.PreEnable) {
-            foreach (var PIN in Inputs) {
-                if (PIN.fieldName.Contains("前置事件") && PIN.fieldName != "前置任务") {
-                    if (PIN.ConnectionCount > 0) {
-                        flag = PIN.GetInputValue<bool>() && flag;
-                    }
-                }
-                else if (PIN.fieldName == "触发启用") {
-                    if (PIN.ConnectionCount > 0) {
-                        flag = PIN.GetInputValue<bool>() && flag;
-                    }
-                }
-            }
-            if (flag) {
-                ((IStory)this).SetUpdateType(Story_UpdateType.Enable);
-                foreach (var POUT in Outputs) {
-                    if (POUT.fieldName == "后触事件") {
-                        foreach (var Pout in POUT.GetConnections()) {
-                            ((IStory)Pout.node).SetUpdateType(Story_UpdateType.PreEnable);
-                            ((IStory)Pout.node).PreloadUpdate();
-                        }
-                    }
-                }
-            }
-        }
+        return;
     }
-
 
     public override void Update(out bool change) {
         bool flag = true;
@@ -157,6 +131,7 @@ public abstract class StoryNodeBase : NodeStatic, IStory {
         this.updateType = Story_UpdateType.Unable;
     }
 }
+
 public abstract class NodeStatic : Node, INode
 {
     [HideInInspector]

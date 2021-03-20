@@ -7,21 +7,21 @@ public static class AllMaterial
 {
 
     [Item(ItemType.Materials, 1)]
-    public class Water : ItemStatic {
+    public class Water : ItemBase {
         public Water(){}
 
 
-        public override void Collision(Collision collision) {
+        public override void CollisionEnter(Collision collision) {
             this.Info_Handler.BeDmged(100);
         }
-        public override void Collision(Item item) {
+        public override void CollisionEnter(Item item) {
             
         }
     }
 
 
     [Item(ItemType.Materials, 2)]
-    public class Fire: ItemStatic
+    public class Fire: ItemBase
     {
 
         public Fire() { }
@@ -29,7 +29,7 @@ public static class AllMaterial
 
     }
     [Item(ItemType.Materials,5)]
-    public class Steam : ItemStatic
+    public class Steam : ItemBase
     {
         public Steam() {
 

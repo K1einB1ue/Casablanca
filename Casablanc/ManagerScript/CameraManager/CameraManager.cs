@@ -2,16 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using UnityEngine.Events;
+
 public class CameraManager : SingletonMono<CameraManager>
 {
-    private static GameObject CamGroup;
+    public static GameObject CamGroup;
     private static bool Zoom = false;
 
-    private void Awake() {
-        if (CamGroup == null) {
-            CamGroup = GameObject.Instantiate(StaticPath.CamGroup);
-        }
-    }
     private void Update() {
         CamUpdate();
     }
@@ -24,6 +21,13 @@ public class CameraManager : SingletonMono<CameraManager>
             cinemachineVirtualCamera2.Follow = transform;
             cinemachineVirtualCamera2.LookAt = transform;
         }
+    }
+
+    public static void Init() {
+        CamGroup ??= GameObject.Instantiate(StaticPath.CamGroup);
+    }
+    public static void CamBindMainCharacter() {
+        CamBind(CharacterManager.Main.Instance.transform);
     }
 
     private void CamUpdate() {

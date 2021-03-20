@@ -46,24 +46,24 @@ public static class AllTool
             return this.ContainerState.Contents[0].Held;
         }
 
-        public override void Collision(Collision collision) {
+        public override void CollisionEnter(Collision collision) {
             this.Info_Handler.BeDmged(MathEx.scalarization(collision.relativeVelocity) * 5);
         }
     }
 
 
     [Item(ItemType.Tool, 4)]
-    public class Brick : ItemStatic {
+    public class Brick : ItemBase {
 
         public Brick() { }
         public override void Use1() {
             ToolComponent.threw(this);
         }
 
-        public override void Collision(Character character) {
+        public override void CollisionEnter(Character character) {
             //((ValuePlayer)player).DecHP(20);
         }
-        public override void Collision(Collision collision) {
+        public override void CollisionEnter(Collision collision) {
             this.Info_Handler.BeDmged(MathEx.scalarization(collision.relativeVelocity)/2.0f);
         }
     }

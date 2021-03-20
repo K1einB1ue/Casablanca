@@ -1,41 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public abstract class LockStatic : ItemStatic, ILock
+public abstract class LockStatic : ItemBase, Lock
 {
-    LockState LockState = new LockState();
-    List<int> ILock.Mapping { get => this.LockState.Mapping; set { this.LockState.Mapping = value; } }
+    public LockState LockState { get { lockState ??= new LockState(this); return lockState; } set => lockState = value; }
+    private LockState lockState;
 
-    bool ILock.Locking { get; set; }
     public LockStatic() { }
-    bool ILock.Match(Key Key) {
-        if (((ILock)this).Mapping.Contains(Key.Mapping)) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    public override void Use2() {
-    }
-    void ILock.Lock(Item Target, out Item itemIn_, out Item itemOu_) {
-        itemIn_ = this;
-        itemOu_ = Items.Empty;
-    }
 
 }
-public interface ILock
+public interface Lock
 {
-    List<int> Mapping { get; set; }
-    bool Match(Key Key);
-    void Lock(Item Target, out Item itemIn, out Item itemOu);
-    bool Locking { get; set; }
-
+    public LockState LockState { get; set; }
 }
 
 
-public class LockState
+public class LockState : StateBase
 {
-    public List<int> Mapping = new List<int>();
+    public LockState(Item item) : base(item) { }
+
+    [LoadProperties(PropertyType.Runtime)]
+    public bool Locking { get => (bool)This.Get(nameof(Locking)); set => This.Set(nameof(Locking), value); }
+    [LoadProperties(PropertyType.Runtime)]
+    public int KeyHash { get => (int)This.Get(nameof(KeyHash)); set => This.Set(nameof(KeyHash), value); }
 }

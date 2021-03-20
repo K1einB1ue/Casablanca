@@ -10,7 +10,7 @@ public interface Bullet
 
 
 
-public class BulletStatic : ItemStatic, Bullet
+public class BulletStatic : ItemBase, Bullet
 {
     public BulletStatic() { }
 
@@ -28,6 +28,6 @@ public class BulletStatic : ItemStatic, Bullet
     protected void NormalTransShoot(GameObject gameObject ,Gun gun) {
         gameObject.transform.position = gun.GetOutPointPos();
         gameObject.SetActive(true);
-        gameObject.GetComponent<Rigidbody>().AddForce((gun.GetOutPointPos() - gun.GetLinePointPos() - gun.GetRandom() * 0.1f).normalized * gun.GetGunState().Firing_Force, ForceMode.Force);
+        gameObject.GetComponent<Rigidbody>().AddForce((gun.GetOutPointPos() - gun.GetLinePointPos() - gun.GetRandom() * 0.1f).normalized * gun.GunState.Firing_Force, ForceMode.Force);
     }
 }

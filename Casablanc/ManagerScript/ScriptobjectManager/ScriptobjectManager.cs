@@ -19,6 +19,12 @@ public class ScriptobjectManager : SingletonMono<ScriptobjectManager>
             obj.FixedUpdate();
         }
     }
+
+    private void OnDisable() {
+        foreach (var obj in scriptable_Monos) {
+            obj.onDisable();
+        }
+    }
 }
 
 

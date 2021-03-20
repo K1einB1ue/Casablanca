@@ -18,6 +18,7 @@ public interface ScriptContainer
 public interface Container : Item
 {
     Item this[int x] { get; set; }
+    int Size { get; }
     bool DecMagazine(int Pos, int num);
     bool DecHeld(int Pos,int num);
     void DropAndDel(Item item, Vector3 pos);
@@ -26,10 +27,12 @@ public interface Container : Item
     void DropAllDelMatch(Vector3 Pos, Func<Item,bool> action);
     Item FindItem(Item item);
     List<Item> FindItem(ItemType ItemType, int ID);
-    List<Item> FindMatch(Func<Item,bool> action);
+    List<Item> FindMatch(Func<Item,bool> func);
+    Item FindFirstMatch(Func<Item,bool> func);
     void GetItemFormGround(GameObject gameObject);
     void GetItemFormGround(Item item);
     bool CheckSpace();
+    bool Contains(Item item);
     void DelItem(Item item);
     bool AddItem(Item item);
     void SetItem(int Pos, Item item);
@@ -37,11 +40,10 @@ public interface Container : Item
     int ItemCount();
     int ItemBlockRemain();
     void Exchange(int x, int y);
-
-    //Stack<int> FindItemPos(Item item, int mark);
+    IEnumerable<Item> ItemsInBag { get; }
     void UpdateDisplay();
 }
-public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
+public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
 {
     public override bool IsContainer => true;
     StoragMethodAdjustment ScriptContainer.StoragMethod { get { return this.storagMethodAdjustment; } set { this.storagMethodAdjustment = value; } }
@@ -66,6 +68,11 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     public ContainerStatic(int size) {
         this.ContainerState = new ContainerState(size);
     }
+
+    /// <summary>
+    /// 只是给Empty做个标记.并无意义
+    /// </summary>
+    /// <param name="itemType"></param>
     public ContainerStatic(ItemType itemType) { }
 
     protected void CheckEmpty() {
@@ -78,7 +85,9 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
         }
     }
 
-
+    bool Container.Contains(Item item) {
+        return ((Container)this).FindFirstMatch((ou) => { return ou == item; }) != null;
+    }
     bool Container.CheckSpace() {
         for(int i = 0; i < ContainerState.size; i++) {
             if (ContainerState.Contents[i] == Items.Empty) {
@@ -90,11 +99,6 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
 
 
     public Item this[int x] { get => this.ContainerState.Contents[x];set => this.ContainerState.Contents[x] = value; }
-    protected void Itemupdate() {
-        for (int i = 0; i < ContainerState.size; i++) {
-            ContainerState.Contents[i].update();
-        }
-    }
     public override void Beheld(Transform transform) {
         base.Beheld(transform);
         if (this.Item_Status_Handler.DisplayWays.Display_things){
@@ -174,19 +178,21 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
     }
     void Container.GetItemFormGround(GameObject gameObject) {
         if (gameObject.GetComponent<ItemOnTheGround>() != null) {
-            if (gameObject.GetComponent<ItemOnTheGround>().itemOntheGround.Item_Status_Handler.GetWays== GetWays.Hand) {
+            if (gameObject.GetComponent<ItemOnTheGround>().itemOntheGround.CanGetNormally) {
                 ((Container)this).AddItem((gameObject.GetComponent<ItemOnTheGround>().itemOntheGround));
             }
-            if (gameObject.GetComponent<ItemOnTheGround>().itemOntheGround.Item_Status_Handler.GetWays == GetWays.Tool){
+            else if (!gameObject.GetComponent<ItemOnTheGround>().itemOntheGround.CanGetNormally){
                 Debug.Log("'这需要什么才能拿下来吧.....' 摇头");
             }
         }
     }
     void Container.GetItemFormGround(Item item) {
-        if (item.Item_Status_Handler.GetWays == GetWays.Hand) {
+        if (item.CanGetNormally) {
             ((Container)this).AddItem(item);
+            item.Item_Status_Handler.Player_Got = true;
+            item.Item_Logic_Handler.BeSelected = false;
         }
-        if (item.Item_Status_Handler.GetWays == GetWays.Tool) {
+        if (!item.CanGetNormally) {
             Debug.Log("'这需要什么工具拿下来吧.....' 摇头");
         }
     }
@@ -202,15 +208,29 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
         }
         return ItemList;
     }
-    List<Item> Container.FindMatch(Func<Item,bool> action) {
+    Item Container.FindFirstMatch(Func<Item,bool> func)  {
+        for (int i = 0; i < ContainerState.size; i++) {
+            if (func(this.ContainerState.Contents[i])) {
+                return ContainerState.Contents[i];
+            }
+        }
+        for (int i = 0; i < FindBag().Count; i++) {
+            Item tmp = ((Container)FindBag()[i]).FindFirstMatch(func);
+            if (tmp!=null ) {
+                return tmp;
+            }
+        }
+        return null;
+    }
+    List<Item> Container.FindMatch(Func<Item,bool> func) {
         List<Item> ItemList = new List<Item> { };
         for (int i = 0; i < ContainerState.size; i++) {
-            if (action(this.ContainerState.Contents[i])) {
+            if (func(this.ContainerState.Contents[i])) {
                 ItemList.Add(ContainerState.Contents[i]);
             }
         }
         for (int i = 0; i < FindBag().Count; i++) {
-            ItemList = ItemList.Concat(((Container)FindBag()[i]).FindMatch(action)).ToList<Item>();
+            ItemList = ItemList.Concat(((Container)FindBag()[i]).FindMatch(func)).ToList<Item>();
         }
         return ItemList;
     }
@@ -388,6 +408,7 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
         }else if (((ScriptContainer)this).StoragMethod.storagMethod == StoragMethod.Ignore) {
             if (((ScriptContainer)this).StoragMethod.IgnoreMap.Contains(Pos)) {
                 if (this.ContainerState.Contents[Pos].GetContainerState() != null) {
+
                     this.ContainerState.Contents[Pos].GetContainerState().Contents[0] = item;
                     this.ContainerReset(item);
                 }
@@ -438,7 +459,8 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
             if (this.Info_Handler.IsInstanced) {
                 for (int i = 0; i < this.ContainerState.size; i++) {
                     if (this.ContainerState.Contents[i].Item_Status_Handler.DisplayWays.Displayable) {
-                        this.ContainerState.Contents[i].BeHeldButDrop(this.Info_Handler.Instance.transform.Find("Attach").Find((i + 1).ToString()));
+                        this.ContainerState.Contents[i].BeHeldButDrop(this.Info_Handler.Instance.transform.FindSon("Attach").Find((i + 1).ToString()));
+                        ((ItemScript)this[i]).OnAttach();
                         if (this.ContainerState.Contents[i].IsContainer) {
                             if (this.ContainerState.Contents[i].Item_Status_Handler.DisplayWays.Display_things) {
                                 ((Container)this.ContainerState.Contents[i]).UpdateDisplay();
@@ -447,6 +469,24 @@ public abstract class ContainerStatic:ItemStatic,Container, ScriptContainer
                     }
                 }
             }
+        }
+    }
+    public int Size => this.ContainerState.size;
+    public IEnumerable<Item> ItemsInBag { get {
+            for(int i = 0; i < Size; i++) {
+                if (this[i] != Items.Empty) {
+                    yield return this[i];
+                }
+            }
+        }
+    }
+    public override float Mass {
+        get {
+            float sum = base.Mass;
+            foreach(var item in ItemsInBag) {
+                sum += item.Mass;
+            }
+            return sum;
         }
     }
 }

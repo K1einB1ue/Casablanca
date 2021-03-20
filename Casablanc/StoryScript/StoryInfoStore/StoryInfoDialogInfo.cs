@@ -11,6 +11,7 @@ public class StoryInfoDialogInfo : ScriptableObject
 
 
 
+
     public Dialog CurrentDialog;
     
 }

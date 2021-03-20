@@ -118,4 +118,17 @@ public abstract class BuildingStatic<T> : ContainerStatic where T:Building,new()
 
 
 
+[Load]
+public class StateBase
+{
+    protected Item This;
+    public StateBase(Item item) {
+        this.This = item;
+    }
+}
+
+
+
+
+
 

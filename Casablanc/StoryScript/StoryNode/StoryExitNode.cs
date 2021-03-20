@@ -6,6 +6,7 @@ using XNode;
 public class StoryExitNode : StoryNodeBase
 {
     [Input(ShowBackingValue.Never,typeConstraint = TypeConstraint.Strict)] public Link_Story @剧情块出口;
+    public List<StoryBlock> @触发剧情块 = new List<StoryBlock>();
     protected override void Init() {
         this.StoryBlock.storyExitNodes.Add(this);
     }
@@ -19,7 +20,6 @@ public class StoryExitNode : StoryNodeBase
                         flag = mark && flag;
                     }
                     if (flag) {
-                        this.StoryBlock.LoadoffStoryNode(((StoryNode)PIN.Connection.node));
                         ((IStory)PIN.Connection.node).SetUpdateType(Story_UpdateType.Disable);
                         return flag;
                     }
@@ -39,7 +39,6 @@ public class StoryExitNode : StoryNodeBase
                         flag = mark && flag;
                     }
                     if (flag) {
-                        this.StoryBlock.LoadoffStoryNode(((StoryNode)PIN.Connection.node));
                         ((IStory)PIN.Connection.node).SetUpdateType(Story_UpdateType.Disable);
                         return;
                     }
@@ -49,5 +48,24 @@ public class StoryExitNode : StoryNodeBase
         }
     }
 
-
+    public override void Update(out bool change) {
+        bool flag = true;
+        change = false;
+        foreach (var PIN in Inputs) {
+            if (PIN.fieldName == "剧情块出口") {
+                if (PIN.ConnectionCount > 0) {
+                    foreach (var mark in PIN.GetInputValues<bool>()) {
+                        flag = mark && flag;
+                    }
+                    if (flag) {
+                        ((IStory)PIN.Connection.node).SetUpdateType(Story_UpdateType.Disable);
+                        return;
+                    }
+                }
+            }
+        }
+        
+    }
 }
+    
+

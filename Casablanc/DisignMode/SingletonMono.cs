@@ -8,7 +8,7 @@ public abstract class SingletonMono<T> : MonoBehaviour where T : SingletonMono<T
 {
     private static T _instance = null;
     protected static object obj = new object();
-    private static T Instance;
+    public static T Instance;
 
 
     public static void Singleton_Mono_initialize() {
@@ -25,8 +25,7 @@ public abstract class SingletonMono<T> : MonoBehaviour where T : SingletonMono<T
                 }
             }
             Instance = _instance;
-
-
+            string tmp = typeof(T).Name;
             StaticRun.EnableMap.Add(Instance.GetType().BaseType.ToString(), true);
         }
     }  

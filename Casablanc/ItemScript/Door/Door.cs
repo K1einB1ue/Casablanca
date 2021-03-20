@@ -2,51 +2,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-public interface IDoor
+public interface Door : Container
 {
-    DoorState GetDoorState();
+    public DoorState DoorState { get; set; } 
 }
-public class Door : Building, IDoor
+public abstract class DoorStatic : ContainerStatic, Door
 {
-    public DoorState doorState = new DoorState();
-    private Item_INFO_Handler INFO_Handler;
-    void Building.Init(Item_INFO_Handler INFO_Handler) {
-        this.INFO_Handler = INFO_Handler;
-    }
-    public virtual void BuildingUse1() {
+    public DoorState DoorState { get { doorState ??= new DoorState(this); return doorState; } set => doorState = value; }
+    private DoorState doorState;
 
-    }
-    public virtual void BuildingUse2() {
+    public DoorStatic(int size) : base(size) { }
+    
 
-    }
-    public virtual void BuildingUse3() {
-
-    }
-    public virtual void Use1() {
-    }
-    public virtual void Use2() {
-    }
-    public virtual void Use3() {
-    }
-    public virtual void Use4() {
-    }
-    public virtual void Use5() {
-    }
-    public virtual void Use6(Item item,out Item itemoutEX) {
-        itemoutEX = Items.Empty;
-    }
-
-    DoorState IDoor.GetDoorState() {
-        return this.doorState;
-    }
 }
-public class DoorState
+
+public class DoorState : StateBase
 {
-    public bool Open = false;
-    public bool HasPeepholes = false;
-    public bool HasPeepholesBroken = false;
-    public int HardnessToPicklock = 0;
-    public int Locknum = 0;
-    public List<ILock> Locks = new List<ILock>();
+    public DoorState(Item item) : base(item) { }
+
+    [LoadProperties(PropertyType.Runtime)]
+    public bool Fiexible { get => (bool)This.Get(nameof(Fiexible)); set => This.Set(nameof(Fiexible), value); }
+    [LoadProperties(PropertyType.Runtime)]
+    public bool Open { get => (bool)This.Get(nameof(Open)); set => This.Set(nameof(Open), value); }
+    [LoadProperties(PropertyType.Static)]
+    public bool HasPeepHoles { get => (bool)This.Get(nameof(HasPeepHoles)); set => This.Set(nameof(HasPeepHoles), value); }
+    [LoadProperties(PropertyType.Static)]
+    public bool HasPeepHolesBroken { get => (bool)This.Get(nameof(HasPeepHolesBroken)); set => This.Set(nameof(HasPeepHolesBroken), value); }
+    
+
 }

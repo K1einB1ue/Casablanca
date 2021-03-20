@@ -35,6 +35,7 @@ public class CharacterInfoStore : ScriptableObject
     public void Save(Character character) {
         CharacterNodeDynamic node = new CharacterNodeDynamic(character);
         this.characterNodeDynamic = node;
+        EditorUtility.SetDirty(this);
     }
 }
 

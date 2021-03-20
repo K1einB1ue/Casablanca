@@ -9,7 +9,7 @@ public interface Key
 }
 
 
-public abstract class KeysStatic : ItemStatic, Key
+public abstract class KeysStatic : ItemBase, Key
 {
     KeyState KeyState = new KeyState();
     public int Mapping { get => this.KeyState.Mapping; set { this.KeyState.Mapping = value; } }

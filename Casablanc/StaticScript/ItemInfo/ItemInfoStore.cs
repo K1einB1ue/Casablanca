@@ -51,7 +51,7 @@ public class ItemInfoStore : ScriptableObject
         ItemNodeDynamic node = null;
         if (item.IsContainer) {
             node = new ItemNodeDynamic((Container)item);
-            node.ItemContain = ((Container)node).GetItemNodes();
+            node.ItemContain = ((Container)item).GetItemNodes();
         }
         else {
             node = new ItemNodeDynamic(item);
@@ -65,18 +65,27 @@ public class ItemInfoStore : ScriptableObject
         this.itemNodesD = itemNodeDynamic;
         EditorUtility.SetDirty(this);
     }
+    public (ItemType, int) GetItemTypeAndItemId() {
+        if (save) {
+            if (!init) {
+                init = true;
+                return this.itemNodesS.GetItemTypeAndItemId();
+            }
+            else {
+                return this.itemNodesD.GetItemTypeAndItemId();
+            }
+        }
+        else {
+            return this.itemNodesS.GetItemTypeAndItemId();
+        }
+    }
     public void StoreContainer(Character character) {
         ItemNodeDynamic contain = new ItemNodeDynamic(character.Bag);
         contain.ItemContain = ((ScriptContainer)character.Bag).GetItemNodes();
         this.itemNodesD = contain;
-            
-    }
-    /*
-    public void StoreContainer(Player player) {
-        this.itemNodesD=player.ItemInfoPackup();
         EditorUtility.SetDirty(this);
+
     }
-    */
 
 
 }

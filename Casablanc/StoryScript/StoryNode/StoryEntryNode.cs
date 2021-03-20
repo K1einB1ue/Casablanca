@@ -13,16 +13,22 @@ public class StoryEntryNode : StoryNodeBase
     public override object GetValue(NodePort port) {
         return true;
     }
+    public override void ReStruct() {
+        base.ReStruct();
+    }
     public override void Update() {
-        foreach (var port in Ports) {
-            if (port.fieldName == "剧情块入口") {
-                foreach (var pout in port.GetConnections()) {
-                    if (((IStory)pout.node).GetUpdateType() == Story_UpdateType.Unable) {
-                        ((IStory)pout.node).SetUpdateType(Story_UpdateType.PreEnable);
-                        ((IStory)pout.node).PreloadUpdate();
+        if (this.GetUpdateType() == Story_UpdateType.Unable) {
+            foreach (var port in Ports) {
+                if (port.fieldName == "剧情块入口") {
+                    foreach (var pout in port.GetConnections()) {
+                        if (((IStory)pout.node).GetUpdateType() == Story_UpdateType.Unable) {
+                            ((IStory)pout.node).SetUpdateType(Story_UpdateType.PreEnable);
+                            ((IStory)pout.node).PreloadUpdate();
+                        }
                     }
                 }
             }
+            ((IStory)this).SetUpdateType(Story_UpdateType.Disable);
         }
     }
 }

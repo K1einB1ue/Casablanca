@@ -20,15 +20,7 @@ public interface Element_Thermodynamics_Handler: IThermodynamics_Unit
 {
     
 }
-//public enum ElementType
-//{
-//    None,
-//    @水,
-//    @铁,
-//    @氧化铁,
-//    @二氧化碳,
 
-//}
 public enum ElementState
 {
     Solid,

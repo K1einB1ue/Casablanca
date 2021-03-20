@@ -4,78 +4,66 @@ using UnityEngine;
 
 public static class AllBuilding
 {
-    
-    [Item(ItemType.Building,1)]
-    public class WoodenDoor : BuildingStatic<Door>
-    {
-        Item Lock { 
-            get {
-                if (this.ContainerState==null) {
-                    this.ContainerState = new ContainerState(this.ContainerState.size);
-                }
-                return this.ContainerState.Contents[0];
-            }
-            set {
-                ((ScriptContainer)this).SetItem(0, value);
-            } 
-        }
-        /*
-        static WoodenDoor() {
-            Items.AddGen<WoodenDoor>(ItemType.Building, 1);
-        }
-        */
-        public WoodenDoor() : base(1) { }
-        /*
-        public WoodenDoor() : base(5, 1, 1) {
-            this.Display = true;
 
+    [Item(ItemType.Building, 1)]
+    public class NormalDoor : DoorStatic
+    {
+        Item Lock { get => this.Ex_GetItem(0); set => this.Ex_SetItem(0, value); }
+        public NormalDoor() : base(1) { }
+
+        public override void Use6(Item item, out Item itemoutEX) {
+            this.ActiveLikeADoorWithALock(0, item, out Item itemoutex);
+            itemoutEX = itemoutex;
         }
-        */
-        public override void Use6(Item item,out Item itemoutEX) {
-            if (this.Lock != null) {
-                if (((ILock)this.Lock).Locking) {
-                    itemoutEX = item;
-                }
-                else {
-                    //((ItemScript)this).GetAnimator().
-                    itemoutEX = item;
+
+        public override void RenderUpdate() {
+            if (Instance) {
+                for (int i = 0; i < this.Item_UI_Handler.MaterialPack.materials.Count; i++) {
+                    if (this.Lock != Items.Empty) {
+                        this.Item_UI_Handler.MaterialPack.materials[i].SetFloat("CantGet", ((Lock)this.Lock).LockState.Locking ? 1 : 0);
+                    }
+                    else {
+                        this.Item_UI_Handler.MaterialPack.materials[i].SetFloat("CantGet", 0);
+                    }
+                    this.Item_UI_Handler.MaterialPack.materials[i].SetFloat("Rate", 1.0f - this.Item_UI_Handler.HPrate);
+                    this.Item_UI_Handler.MaterialPack.materials[i].SetFloat("Cover", this.Outestcontainer is AllContainer.CharacterStaticBag ? 1.0f : 0.0f);
+                    if (Input.GetKey(KeyCode.P) || this.Item_Logic_Handler.BeSelected) {
+                        this.Item_UI_Handler.MaterialPack.materials[i].SetFloat("Framed", 1.0f);
+                    }
+                    else {
+                        this.Item_UI_Handler.MaterialPack.materials[i].SetFloat("Framed", 0.0f);
+                    }
                 }
             }
-            else {
-                //((ItemScript)this).GetAnimator().
-                itemoutEX = item;
-            }
-            
         }
+
+
+        public override void __SynchronizationAfterItemPropertyConstructor() {
+            this.Animator.SetBool("Open", this.DoorState.Open);
+            this.Animator.SetTrigger("Init");
+
+            UseBind(6, ((Door)this).ActiveLikeADoor);
+        }
+
+
+
     }
 
 
     [Item(ItemType.Building, 2,false)]
     public class WoodenWindow: BuildingStatic<Window>
     {
-        static WoodenWindow() {
-            //Items.AddGen<WoodenWindow>(ItemType.Building, 2);
-        }
         public WoodenWindow() : base(0) { }
     }
 
 
     [Item(ItemType.Building, 3)]
-    public class IronDoor: BuildingStatic<Door>
+    public class IronDoor: DoorStatic //BuildingStatic<Door>
     {
-        /*
-        static IronDoor() {
-            Items.AddGen<IronDoor>(ItemType.Building, 3);
-        }
-        */
         public IronDoor() : base(1) {
             this.ItemIntro = new ItemIntro("讲道理这玩意怎么破坏嘛...\n十分坚硬的铁门");
         }
-        /*
-        public IronDoor() : base(5, 3, 1) {
-            this.Display = true;         
-        }
-        */
+
         public override void Use6(Item item,out Item itemoutEX) {
             Debug.Log("拜托,这已经不在我的业务范围内了");
             itemoutEX = item;
@@ -90,17 +78,8 @@ public static class AllBuilding
     [Item(ItemType.Building, 4)]
     public class DustBin : BuildingStatic<Drawer>
     {
-        /*
-        static DustBin() {
-            Items.AddGen<DustBin>(ItemType.Building, 4);
-        }
-        */
         public DustBin() : base(1) { }
-        /*
-        public DustBin() : base(5, 4, 1) {
-            this.Display = false;
-        }
-        */
+
         public override void Use6(Item item,out Item itemoutEX) {
             if (item == Items.Empty) {
                 if (this.ContainerState.Contents[0] != null) {
@@ -128,44 +107,21 @@ public static class AllBuilding
 
 
     [Item(ItemType.Building, 5)]
-    public class Gate : BuildingStatic<Door>
+    public class Gate : DoorStatic
     {
-        Item Lock
-        {
-            get {
-                if (this.ContainerState == null) {
-                    this.ContainerState = new ContainerState(this.ContainerState.size);
-                }
-                return this.ContainerState.Contents[0];
-            }
-            set {
-                ((ScriptContainer)this).SetItem(0, value);
-            }
-        }
-        /*
-        static Gate() {
-            Items.AddGen<Gate>(ItemType.Building, 5);
-        }
-        */
-        public Gate() : base(1) { }
-        /*
-        public Gate() : base(5, 5, 1) {
-            this.Display = true;
+        Item Lock { get => this.Ex_GetItem(0); set => this.Ex_SetItem(0, value); }
 
-        }
-        */
+        public Gate() : base(1) { }
+
         public override void Use6(Item item, out Item itemoutEX) {
-            itemoutEX = item;
-            if (!((IDoor)this.Building).GetDoorState().Open) {
-                ((ItemScript)this).GetAnimator().SetBool("Open", true);
-                ((ItemScript)this).GetAnimator().SetTrigger("Change");
-                ((IDoor)this.Building).GetDoorState().Open = true;
-            }
-            else {
-                ((ItemScript)this).GetAnimator().SetBool("Open", false);
-                ((ItemScript)this).GetAnimator().SetTrigger("Change");
-                ((IDoor)this.Building).GetDoorState().Open = false;
-            }
+            this.ActiveLikeADoorWithALock(0, item, out Item itemoutex);
+            itemoutEX = itemoutex;
+        }
+        public override void __SynchronizationAfterItemPropertyConstructor() {       
+            this.Animator.SetBool("Open", this.DoorState.Open);
+            this.Animator.SetTrigger("Init");
+
+            UseBind(6, ((Door)this).ActiveLikeADoor);
         }
     }
 
@@ -173,16 +129,7 @@ public static class AllBuilding
     [Item(ItemType.Building, 6)]
     public class IronBarrel : BuildingStatic<Drawer>
     {
-        /*
-        public IronBarrel() : base(5, 6, 10) {
-            this.Display = false;
-        }
-        */
-        /*
-        static IronBarrel() {
-            Items.AddGen<IronBarrel>(ItemType.Building, 6);
-        }
-        */
+
         public IronBarrel() : base(10){ }
 
 

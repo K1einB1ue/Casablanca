@@ -2,46 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-[CreateAssetMenu(fileName ="剧情节点存储",menuName ="剧情/剧情节点存储")]
-public class StoryNodeCurrent : NodeStoreBase, ISerializationCallbackReceiver
-{
-    public static HashGenerator StoryHash = new HashGenerator();
-    public List<StoryBlock> ActiveBlock = new List<StoryBlock>();
-
-    public void LoadStoryBlock(StoryBlock storyBlock) {
-        storyBlock.Hash = StoryHash.GetHash();
-        this.StoryBlocks[storyBlock.Hash] = storyBlock;
-    }
-    public void LoadoffStoryBlock(StoryBlock storyBlock) {
-        this.StoryBlocks[storyBlock.Hash] = null;
-        StoryHash.DisHash(storyBlock.Hash);
-        storyBlock.Hash = -1;
-    }
-
-    void ISerializationCallbackReceiver.OnAfterDeserialize() {
-        this.StoryBlocks.Clear();
-        foreach (var block in ActiveBlock) {
-            block.Hash = StoryHash.GetHash();
-            StoryBlocks[block.Hash] = block;
-        }
-    }
-
-    void ISerializationCallbackReceiver.OnBeforeSerialize() {
-        this.ActiveBlock.Clear();
-        foreach (var block in StoryBlocks) {
-            block.Value.Hash = -1;
-            this.ActiveBlock.Add(block.Value);
-        }
-    }
-}
+using UnityEngine.Events;
 
 
 
+/*
 public class StoryNodeStatic : ScriptableObject, StoryStoreSpace.StoryNode
 {
     public StoryStaticInfoPackage StoryStaticInfoPackage;
-    public StoryPreInstanceInfoPackage StoryPreInstanceInfoPackage = new StoryPreInstanceInfoPackage();
+    public Story GetStory() {
+
+    }
 }
 [Serializable]
 public class StoryNodeDynamic : StoryStoreSpace.StoryNode 
@@ -50,18 +21,16 @@ public class StoryNodeDynamic : StoryStoreSpace.StoryNode
     public StoryNodeDynamic(Story story) {
         this.StoryRuntimeInfoPackage = new StoryRuntimeInfoPackage(story);
     }
-}
-[Serializable]
-public enum StoryStaticDescribeWays
-{
-    StoryStore,
-    StoryID,
+    public Story GetStory() {
+
+    }
 }
 [Serializable]
 public class StoryStaticInfoPackage
 {
-    public StoryStaticDescribeWays storyStaticDescribeWays = StoryStaticDescribeWays.StoryStore;
-    public StoryStore StoryStore;
+    public List<StoryBlock> StoryBlocks;
+    public List<StoryNode> storyNodes;
+    public List<DialogNode> DialogNodes;
 }
 
 public class StoryRuntimeInfoPackage
@@ -71,72 +40,142 @@ public class StoryRuntimeInfoPackage
         
     }
 }
-public class StoryPreInstanceInfoPackage
+
+public class DialogMap
 {
-
+    private Dictionary<DialogMachine, Dialog> Dialogs = new Dictionary<DialogMachine, Dialog>();
+    public Dialog this[DialogMachine dialogMachine] {
+        get {
+            if (Dialogs.TryGetValue(dialogMachine, out var dialog)) {
+                return dialog;
+            }
+            Debug.Log("错误");
+            return null;
+        }
+    }
 }
-
-
 
 
 namespace StoryStoreSpace
 {
     public interface StoryNode
     {
-        //Story GetStory();
+        Story GetStory();
     }
 }
 
 
-public interface Story
+public class Story
 {
+    public Story() {
+
+    }
+    private DialogMap DialogMap = new DialogMap();
+
 
 }
-public abstract class StoryBase : Story 
-{
 
-}
+
 
 namespace StoryStaticProperties
 {
     [Serializable]
     public class StoryStaticProperties
     {
-
+        public StoryStaticValues StoryStaticValues = new StoryStaticValues();
     }
+
+    [Serializable]
+    public class StoryStaticValues
+    {
+        public StaticValues.StaticValues_Time StaticValues_Time = new StaticValues.StaticValues_Time();
+    }
+    namespace StaticValues {
+
+        [Serializable]
+        public class StaticValues_Time
+        {
+            public List<TimePoint> timePoints = new List<TimePoint>();
+        }
+    }
+
 }
 namespace StoryRuntimeProperties
 {
     [Serializable]
     public class StoryRuntimeProperties
     {
+        [HideInInspector]
+        public bool init = false;
 
+        public StoryRuntimeValues StoryRuntimeValues = new StoryRuntimeValues();
+        public StoryRuntimeTemps StoryRuntimeTemps = new StoryRuntimeTemps();
+
+        public StoryRuntimeProperties(StoryStaticProperties.StoryStaticProperties storyStaticProperties) {
+            if (!this.init) {
+
+
+
+
+            }
+            this.init = true;
+        }
     }
-}
-namespace StoryPreInstanceProperties
-{
+
+
     [Serializable]
-    public class StoryPreInstanceProperties
+    public class StoryRuntimeValues
     {
 
     }
+
+
+    namespace RuntimeValues
+    {
+
+        [Serializable]
+        public class RuntimeValue_Story
+        {
+            public List<StoryNode> StoryNodePreEnable = new List<StoryNode>();
+        }
+
+
+
+    }
+
+    public class StoryRuntimeTemps
+    {
+        public RuntimeTemps.RuntimeTemps_Event RuntimeTemps_Event = new RuntimeTemps.RuntimeTemps_Event();
+
+
+    }
+
+    namespace RuntimeTemps
+    {
+        public class RuntimeTemps_Event
+        {
+            public StoryEvent StoryEvent = new StoryEvent();
+        }
+
+        public class RuntimeTemps_Story
+        {
+            public BigRootHeap<TimePoint> TimeQuene = new BigRootHeap<TimePoint>();
+            public Dictionary<TimePoint, StoryNode> Mapping = new Dictionary<TimePoint, StoryNode>();
+            
+        }
+
+
+
+    }
+
+
 }
 
 
-public abstract class NodeStoreBase : ScriptableObject, INode {
-    protected Dictionary<int, StoryBlock> StoryBlocks = new Dictionary<int, StoryBlock>();
-    void INode.Update() {
-        foreach (var block in StoryBlocks) {
-            ((INode)block.Value).Update();
-        }
-    }
-    void INode.NodeInit() {
-        foreach (var block in StoryBlocks) {
-            ((INode)block.Value).NodeInit();
-        }
-    }
-    void INode.ReStruct() { }
-    NodeType INode.GetNodeType() {
-        return NodeType.Store;
-    }
-}
+
+
+
+
+public class StoryEvent : UnityEvent { }
+
+*/

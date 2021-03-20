@@ -92,7 +92,7 @@ public class CharacterRuntimeInfoPackage
     public CharacterRuntimeProperties.CharacterRuntimeProperties CharacterRuntimeProperties;
 
     public CharacterRuntimeInfoPackage(Character character) {
-        CharacterRuntimeProperties = character.GetCharacterProperty().CharacterRuntimeProperties;
+        CharacterRuntimeProperties = character.Info_Handler.Character_Property.CharacterRuntimeProperties;
     }
 
 }

@@ -8,9 +8,13 @@ using UnityEditor;
 
 
 
-public class ItemOnTheGround : MonoBehaviour
+public class ItemOnTheGround : MonoBehaviour, ObjectOnTheGround
 {
+    Object_Values_Handler ObjectOnTheGround.Object_Values_Handler { get => itemOntheGround.Item_Values_Handler; }
+    object ObjectOnTheGround.Object { get => itemOntheGround; }
     public Item itemOntheGround;
+
+
 
     public Instance_Type Instance_Type = Instance_Type.Single;
     public Info_Type Info_Type = Info_Type.Properties;
@@ -28,36 +32,17 @@ public class ItemOnTheGround : MonoBehaviour
     private ItemPreInstanceProperties.ItemPreInstanceProperties ItemPreInstanceProperties = new ItemPreInstanceProperties.ItemPreInstanceProperties();
 
     [SerializeField]
-    private List<ItemNodeDynamic> Cotent = new List<ItemNodeDynamic>(); 
-    
+    private List<ItemNodeDynamic> Cotent = new List<ItemNodeDynamic>();
+
 
     public int MultiCount = 0;
 
     [SerializeField]
     private bool InitInScene = false;
 
-    private bool TypeIDGive =false;
 
 
-    private MaterialPack materialPack;
-
-    [HideInInspector]
-    public bool selected = false;
-
-
-    private void Awake() {
-        if (materialPack == null) {
-            materialPack = new MaterialPack();
-        }
-        if (this.Instance_Type != Instance_Type.Muilti) {
-            materialPack.materials.Add(this.transform.Find("Graph").GetComponent<Renderer>().material);
-        }
-        else {           
-            for(int i=0;i< MultiCount; i++) {
-                //materialPack.materials.Add(this.transform.Find("Graph" + i.ToString()).GetComponent<Renderer>().material);
-            }
-        }   
-    }
+    private MaterialPack MaterialPack;
 
 
 
@@ -65,33 +50,43 @@ public class ItemOnTheGround : MonoBehaviour
         if (this.InitInScene) {
             ItemOnTheGroundInit();
             this.itemOntheGround.Info_Handler.ReplaceInstance(this.gameObject);
-            this.TypeIDGive = true;
-        }   
+        }
     }
 
 
 
     private void Update() {
         if (itemOntheGround != null) {
-            itemOntheGround.update();
+            ((ObjectOnGroundBase)this.itemOntheGround).UpdateBase();
         }
-        if (Instance_Type != Instance_Type.Muilti) {
-            materialPack.Update(this.itemOntheGround, this.selected);
-        }
+
     }
 
+    private void OnDisable() {
+        if (this.Info_Type == Info_Type.InfoStore) {
+            if (this.itemOntheGround.Outercontainer == null) {
+                this.ItemInfoStore.Save(this.itemOntheGround);
+            }
+        }
+        else {
+
+        }
+    }
 
 
     private void OnCollisionEnter(Collision collision) {
-        ((ItemOnGroundBase)this.itemOntheGround).CollisionBase(collision);
+        ((ObjectOnGroundBase)this.itemOntheGround).CollisionEnterBase(collision);
+    }
+    private void OnCollisionExit(Collision collision) {
+        ((ObjectOnGroundBase)this.itemOntheGround).CollisionExitBase(collision);
     }
     private void OnTriggerStay(Collider other) {
-        ((ItemOnGroundBase)this.itemOntheGround).TriggerBase(other);
+        ((ObjectOnGroundBase)this.itemOntheGround).TriggerStayBase(other);
     }
 
     private void ItemOnTheGroundInit() {
         if (this.Info_Type == Info_Type.InfoStore) {
-            itemOntheGround = this.ItemInfoStore.GetNonSaveContainer();
+            itemOntheGround = this.ItemInfoStore.GetItem();
             this.ItemType = this.itemOntheGround.Type;
             this.ItemID = this.itemOntheGround.ID;
             if (this.itemOntheGround.IsContainer) {
@@ -115,14 +110,12 @@ public class ItemOnTheGround : MonoBehaviour
             this.itemOntheGround = Items.GetItemByItemTypeAndItemID_With_StaticProperties_And_PreInstanceProperties(this.ItemStore.ItemStaticProperties.ItemType, this.ItemStore.ItemStaticProperties.ItemID, this.ItemPreInstanceProperties);
             if (this.Cotent.Count > 0) {
                 for (int i = 0; i < Cotent.Count; i++) {
-                    ItemType itemType = Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
-                    {
+                    ItemType itemType = Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch {
                         RuntimeProperty_Detail_Info.Properties => Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemType,
                         RuntimeProperty_Detail_Info.Store => Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemType,
                         _ => ItemType.Error,
                     };
-                    int itemID = Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch
-                    {
+                    int itemID = Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.Detail_Info switch {
                         RuntimeProperty_Detail_Info.Properties => Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemID,
                         RuntimeProperty_Detail_Info.Store => Cotent[i].ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemStore.ItemStaticProperties.ItemID,
                         _ => 0,
@@ -139,6 +132,57 @@ public class ItemOnTheGround : MonoBehaviour
         }
     }
 
+    public (ItemType, int) GetItemTypeAndItemId() {
+        if (this.Info_Type == Info_Type.InfoStore) {
+            return this.ItemInfoStore.GetItemTypeAndItemId();
+        }
+        else if (this.Info_Type == Info_Type.Properties) {
+            return (this.ItemType, this.ItemID);
+        }
+        else if (this.Info_Type == Info_Type.Store) {
+            return (ItemStore.ItemStaticProperties.ItemType, ItemStore.ItemStaticProperties.ItemID);
+        }
+        else {
+            Debug.LogWarning("错误");
+            return (ItemType.Error, 0);
+        }
+
+    }
+    public ItemStore StaticItemStore {
+        get {
+            if(this.GetItemTypeAndItemId().Item1!= ItemType.Error) {
+                return StaticPath.ItemLoad[this.GetItemTypeAndItemId().Item1, this.GetItemTypeAndItemId().Item2];
+            }
+            else {
+                Debug.LogWarning("错误");
+                return null;
+            }
+        }
+    }
+
+    public MaterialPack GetMaterialPack() {
+        if (this.MaterialPack != null) {
+            return this.MaterialPack;
+        }
+        else {
+            MaterialPack materialPack = new MaterialPack();
+            if (this.Instance_Type != Instance_Type.Muilti) {
+                materialPack.materials.Add(this.transform.Find("Graph").GetComponent<Renderer>().material);
+            }
+            else {
+                foreach (var tran in this.gameObject.transform.FindSons((Transform trans) => {
+                    if (trans.TryGetComponent<ObjectLeader>(out var itemLeader)) {
+                        return itemLeader.ShaderTrigger;
+                    }
+                    return false;
+                })) {
+                    materialPack.materials.Add(tran.GetComponent<Renderer>().material);
+                }
+            }
+            this.MaterialPack = materialPack;
+            return materialPack;
+        }
+    }
 }
 
 
@@ -233,20 +277,24 @@ public class ItemOnTheGroundEditor : Editor
             Ls.Add(Tran.gameObject);
         }
         for (int i = 0; i < Ls.Count; i++) {
-            int temp = int.Parse(Ls[i].name.Replace("Graph", ""));
+            var num = Ls[i].name.Replace("Graph", "");
+            int temp = -1;
+            if (num != "") {
+                temp = int.Parse(num);
+            }                    
             if (temp >= item.MultiCount) {
                 GameObject.DestroyImmediate(Ls[i]);
             }
             else {
-                if (Ls[i].TryGetComponent<ItemLeader>(out var itemLeader)) {
+                if (Ls[i].TryGetComponent<ObjectLeader>(out var itemLeader)) {
                     if (itemLeader.Target != item.gameObject) {
-                        Debug.LogWarning("ItemLeader的Target出现了非母物品的状态 请确认.");
+                        Debug.Log("ItemLeader的Target出现了非母物品的状态 请确认.");
                     }
                 }
                 else {
-                    ItemLeader leader = Ls[i].AddComponent<ItemLeader>();
+                    ObjectLeader leader = Ls[i].AddComponent<ObjectLeader>();
                     leader.Target = item.gameObject;
-                    Debug.LogWarning("为Graph" + i.ToString() + "添加了Itemleader");
+                    Debug.Log("为Graph" + i.ToString() + "添加了Itemleader");
                 }
                 vs.Add(temp);
             }
@@ -257,9 +305,9 @@ public class ItemOnTheGroundEditor : Editor
                 gameObject.transform.parent = item.transform;
                 gameObject.transform.position = item.transform.position;
                 gameObject.name = "Graph" + i.ToString();
-                ItemLeader leader = gameObject.AddComponent<ItemLeader>();
+                ObjectLeader leader = gameObject.AddComponent<ObjectLeader>();
                 leader.Target = item.gameObject;
-                Debug.LogWarning("为Graph" + i.ToString() + "添加了Itemleader");
+                Debug.Log("为Graph" + i.ToString() + "添加了Itemleader");
             }
         }
     }
@@ -267,22 +315,11 @@ public class ItemOnTheGroundEditor : Editor
 }
 
 
-[Serializable]
 public class MaterialPack
 {
     public List<Material> materials = new List<Material>();
 
-    public void Update(Item itemOntheGround,bool selected) {
-        for(int i = 0; i < materials.Count; i++) {
-            materials[i].SetFloat("CantGet", itemOntheGround.Item_Status_Handler.GetWays == GetWays.Hand ? 0 : 1);
-            materials[i].SetFloat("Rate", 1.0f - itemOntheGround.Item_UI_Handler.HPrate);
-            if (Input.GetKey(KeyCode.P) || selected) {
-                materials[i].SetFloat("Boolean_590330D2", 1.0f);
-            }
-            else {
-                materials[i].SetFloat("Boolean_590330D2", 0.0f);
-            }
-        }
-    }
 }
+
+
 

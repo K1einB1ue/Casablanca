@@ -10,7 +10,7 @@ public static class UIRegister {
         Init_Search();
     }
     private static void Init_Search() {
-        Type type = typeof(UIStatic);
+        Type type = typeof(UIBase);
         Assembly assembly = Assembly.GetAssembly(type);
         foreach (Type Child in assembly.GetTypes()) {
             object[] vs = Child.GetCustomAttributes(typeof(UIAttribute), true);
@@ -32,7 +32,7 @@ public static class ItemRegister
         Init_Search();
     }
     private static void Init_Search() {
-        Type type = typeof(ItemStatic);
+        Type type = typeof(ItemBase);
         Assembly assembly = Assembly.GetAssembly(type);
         foreach (Type Child in assembly.GetTypes()) {
             object[] vs = Child.GetCustomAttributes(typeof(ItemAttribute), true);

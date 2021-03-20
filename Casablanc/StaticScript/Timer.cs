@@ -63,41 +63,47 @@ public class Timer
         action();
     }
 
-    public static IEnumerator FadeOut(float time,CanvasGroup canvasGroup) {
-        bool Lock = false;
-        AlphaLoopDEC(ref Lock, canvasGroup);
-        yield return new WaitForSeconds(time);
-        Lock = true;
-        canvasGroup.gameObject.SetActive(false);
-        canvasGroup.alpha = 0;
-    }
-    private static void AlphaLoopDEC(ref bool Lock, CanvasGroup canvasGroup) {
-        while (!Lock) {
-            canvasGroup.alpha -= canvasGroup.alpha / 2f;
-        }
-    }
    
 }
 
 public class ActionTimer
 {
-    public float IntervalTime;
+    private float IntervalTime;
     private float TimeBef = 0;
+    private bool BindRef = false;
+    private Func<float> intervalTime;
     private UseEvent UseEvent = new UseEvent();
     public ActionTimer() { }
     public void SetTimer(float IntervalTime) {
         this.IntervalTime = IntervalTime;
+        this.BindRef = false;
     }
-    public void Registe(UnityAction unityAction) {
+    public void SetTimer(Func<float> IntervalTime) {
+        this.intervalTime = IntervalTime;
+        this.BindRef = true;
+    }
+    public void Register(UnityAction unityAction) {
         this.UseEvent.AddListener(unityAction);
     }
     public void Invoke() {
-        if ((this.IntervalTime + this.TimeBef <= Time.fixedTime)) {
-            this.TimeBef = Time.fixedTime;
-            UseEvent?.Invoke();
+        if (!BindRef) {
+            if ((this.IntervalTime + this.TimeBef <= Time.fixedTime)) {
+                this.TimeBef = Time.fixedTime;
+                UseEvent?.Invoke();
+            }
         }
+        else {
+            if ((this.intervalTime.Invoke() + this.TimeBef <= Time.fixedTime)) {
+                this.TimeBef = Time.fixedTime;
+                UseEvent?.Invoke();
+            }
+        }
+    }
+    public void ForceInvoke() {
+        UseEvent?.Invoke();
     }
 }
 
 
 public class UseEvent : UnityEvent { }
+public class UseEvent<T, B> : UnityEvent<T, B> { }

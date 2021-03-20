@@ -8,16 +8,19 @@ using XNode;
 [CustomNodeGraphEditor(typeof(StoryBlock))]
 public class StoryBlockEditor : NodeGraphEditor
 {
+    
     public override void OnGUI() {
+        
         Rect WinRect = new Rect(20, 20, 200, 200);
         base.OnGUI();
         StoryBlock storyBlock = target as StoryBlock;
         if (GUILayout.Button("重构", GUILayout.Width(60))) {
-            foreach (var node in target.nodes) {
-                ((INode)node).ReStruct();
-            }
+            storyBlock.ReStruct();
+
             storyBlock.LoadEntry = false;
             storyBlock.Intest = false;
+
+            StaticPath.StoryInfoChannel.ReStruct();
         }
         if (GUILayout.Button("块演算", GUILayout.Width(60))) {
             storyBlock.UpdateStoryNodes();
@@ -33,6 +36,7 @@ public class StoryBlockEditor : NodeGraphEditor
                 }
             }       
         }
+
         
         if (storyBlock.Intest) {
             if (StaticPath.Story_DialogInfo.CurrentDialog != null) {
