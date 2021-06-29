@@ -6,12 +6,14 @@ using UnityEngine.Events;
 
 public class CharacterManager : SingletonMono<CharacterManager>
 {
+    public static void Refresh() {
+        Main.Object_Handler.Refresh();
+    }
     public static Character Main { get => main; 
         set { 
             if (main != value) { 
                 main = value;
                 CameraManager.Init();
-                EventManager.CharacterManager.OnMainCharacterChange.AddListenerOnce(CameraManager.CamBindMainCharacter);
                 EventManager.CharacterManager.OnMainCharacterChange?.Invoke(); 
             } 
             else { 
@@ -26,7 +28,10 @@ public class CharacterManager : SingletonMono<CharacterManager>
     
 
 
-
+    static CharacterManager() {
+        EventManager.CharacterManager.OnMainCharacterChange.AddListenerOnce(CameraManager.CamBindMainCharacter);
+        EventManager.CharacterManager.OnMainCharacterChange.AddListenerOnce(CharacterManager.Refresh);
+    }
 
 
 

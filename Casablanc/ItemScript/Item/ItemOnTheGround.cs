@@ -20,7 +20,7 @@ public class ItemOnTheGround : MonoBehaviour, ObjectOnTheGround
     public Info_Type Info_Type = Info_Type.Properties;
 
     [SerializeField]
-    private ItemInfoStore ItemInfoStore;
+    public ItemInfoStore ItemInfoStore;
     [SerializeField]
     private ItemStore ItemStore;
     [SerializeField]
@@ -264,11 +264,34 @@ public class ItemOnTheGroundEditor : Editor
                 this.MultiAdjustment(item);
             }
         }
+
         EditorGUILayout.PropertyField(InitInScene);
+        if (item.ItemInfoStore == null) {
+            if (GUILayout.Button("绑定存储器", GUILayout.Width(200))) {
+                BindItemInfoStore(item);
+            }
+        }
 
         if (EditorGUI.EndChangeCheck()) {
             serializedObject.ApplyModifiedProperties();
         }
+    }
+    private void BindItemInfoStore(ItemOnTheGround item) {
+        item.Info_Type = global::Info_Type.InfoStore;        
+        var temp = ScriptableObject.CreateInstance<ItemInfoStore>();
+        if (!System.IO.Directory.Exists(Application.streamingAssetsPath + "/../Resources/池/存储器/关卡物品存储/" + item.gameObject.scene.name)) {
+            AssetDatabase.CreateFolder("Assets/Resources/池/存储器/关卡物品存储", item.gameObject.scene.name);
+            AssetDatabase.Refresh();
+        }
+        int num = 0;
+        while (System.IO.File.Exists(Application.streamingAssetsPath + "/../Resources/池/存储器/关卡物品存储/" + item.gameObject.scene.name + "/" + item.gameObject.name + " " + num.ToString() + ".asset")) {
+            num++;
+        }
+        AssetDatabase.CreateAsset(temp, "Assets/Resources/池/存储器/关卡物品存储/" + item.gameObject.scene.name + "/" + item.gameObject.name + " " + num.ToString() + ".asset");
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        item.ItemInfoStore = temp;
+        
     }
     private void MultiAdjustment(ItemOnTheGround item) {
         List<int> vs = new List<int>();

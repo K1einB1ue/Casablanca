@@ -7,16 +7,21 @@ using UnityEngine.Events;
 [CreateAssetMenu(fileName = "剧情接口", menuName = "固化接口/剧情接口")]
 public class StoryInfoChannel : InfoChannel
 {
+    /// <summary>
+    /// 存储结构
+    /// </summary>
     [SerializeField]
     private List<DialogMachineGroup> DialogMachineGroups = new List<DialogMachineGroup>();
 
     [SerializeField]
     private List<DialogNode> DialogNodesTable = new List<DialogNode>();
 
-
-
+    /// <summary>
+    /// 运行时构造
+    /// </summary>
     private Dictionary<DialogMachineGroup, LinkedList<DialogNode>> DialogEnableMap;
     private List<DialogMachine> DisableTable = new List<DialogMachine>();
+    
 
 
     public StoryBlock Main;
@@ -33,12 +38,29 @@ public class StoryInfoChannel : InfoChannel
         this.DisableTable.Clear();
         foreach(var pair in DialogEnableMap) {
             if (pair.Key.Match(Group)) {
-                pair.Value.First.Value.DialogMachine.Dialog = pair.Value.First.Value;
+                //if (pair.Value.First.Value.DialogMachine.Dialog == null) {
+                //    pair.Value.First.Value.DialogMachine.Dialog = pair.Value.First.Value;
+                //}
+                //else {
+                Dialog sum = null;
+                var ptr = pair.Value.First;
+                while (ptr != null) {
+                    if (sum == null) {
+                        sum = ptr.Value;
+                    }
+                    else {
+                        sum = sum.Combine(ptr.Value);
+                    }
+                    ptr = ptr.Next;
+                }
+
+                pair.Value.First.Value.DialogMachine.Dialog = sum;//pair.Value.First.Value.DialogMachine.Dialog.DialogGroupLize() + pair.Value.First.Value.DialogGroupLize();
+                //}
                 this.DisableTable.Add(pair.Value.First.Value.DialogMachine);
             }
         }
     }
-    
+
     public void EnableANode(DialogNode dialogNode) {
         if(DialogEnableMap.TryGetValue(dialogNode.DialogMachineGroup,out var dialogNodes)) {
             dialogNodes ??= new LinkedList<DialogNode>();
@@ -51,6 +73,7 @@ public class StoryInfoChannel : InfoChannel
         }
     }
     public void DisAbleANode(DialogNode dialogNode) {
+
         if (DialogEnableMap[dialogNode.DialogMachineGroup].Remove(dialogNode)) {
             if (DialogEnableMap[dialogNode.DialogMachineGroup].Count==0) {
                 DialogEnableMap.Remove(dialogNode.DialogMachineGroup);
@@ -65,7 +88,7 @@ public class StoryInfoChannel : InfoChannel
         int mark = 0;
         for (int i = 0; i < DialogMachineGroups.Count; i++) {
             var tmp = new LinkedList<DialogNode>();
-            this.DialogEnableMap.Add(DialogMachineGroups[i], tmp);
+            this.DialogEnableMap.Add(DialogMachineGroups[i].DialogMachineGroupSource, tmp);
             while (DialogNodesTable[mark] != null) {
                 tmp.AddLast(DialogNodesTable[mark]);
                 mark++;

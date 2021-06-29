@@ -70,11 +70,12 @@ public static class Characters
 
 }
 
-public interface Character_Detail
+public interface Character_Detail : Object_Detail
 {
     Character_INFO_Handler Info_Handler { get; set; }
     Character_UI_Handler Character_UI_Handler { get; }
     Character_Values_Handler Character_Values_Handler { get; }
+   
 
 }
 public interface Character: Character_Detail
@@ -165,9 +166,7 @@ public abstract class CharacterBase : ObjectBase ,Character
         }
     }
     public override void TriggerEnter(ObjectOnTheGround obj) {
-        Debug.Log(obj.Object.GetType().Name);
         if (this.Info_Handler.DialogMachineGroup.PackUp(obj.Object_Values_Handler.DialogMachines)) {
-            Debug.Log("Ìí¼Ó");
             StoryChannelManager.UpdateDialog(this.Info_Handler.DialogMachineGroup);
         }
     }
@@ -175,7 +174,7 @@ public abstract class CharacterBase : ObjectBase ,Character
         //if (this.Info_Handler.DialogMachineGroup.PackUp(obj.Object_Values_Handler.DialogMachines)) {
         //    StoryChannelManager.UpdateDialog(this.Info_Handler.DialogMachineGroup);
         //}
-    }                       
+    }
     public override void TriggerExit(ObjectOnTheGround obj) {
         if (this.Info_Handler.DialogMachineGroup.Remove(obj.Object_Values_Handler.DialogMachines)) {
             StoryChannelManager.UpdateDialog(this.Info_Handler.DialogMachineGroup);
@@ -184,6 +183,10 @@ public abstract class CharacterBase : ObjectBase ,Character
 
     private void _AfterMained() { CharacterManager.Main = this; }
 
+
+    public override void Refresh() {
+        StoryChannelManager.UpdateDialog(this.Info_Handler.DialogMachineGroup);
+    }
 }
 
 public interface Character_INFO_Handler: Character_Object_Handler, Character_Trigger_Handler, Character_Kinematic_Handler,
@@ -471,10 +474,10 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     #region Container
     public Item Held { get => Bag[HeldMark]; set {
             if (Bag[HeldMark] != Items.Empty) {
-                Bag[HeldMark].Item_Status_Handler.GetWays = GetWays.Hand;
+                ((ItemBase)Bag[HeldMark]).OffHand();
             }
             if (value != Items.Empty) {
-                value.Item_Status_Handler.GetWays = GetWays.Tool;
+                ((ItemBase)value).OnHand();
             }
             Bag[HeldMark] = value;
         }
@@ -485,14 +488,14 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     private void SwitchItem(int Heldnum) {
         if (Heldnum != HeldMark) {
             Held.Destory();
-            Held.Item_Status_Handler.GetWays = GetWays.Hand;
+            ((ItemBase)Held).OffHand();
             HeldMark = Heldnum;
             HeldUpdate();
         }
     }
     private void SwitchItemDown() {
         Held.Destory();
-        Held.Item_Status_Handler.GetWays = GetWays.Hand;
+        ((ItemBase)Held).OffHand();
         HeldMark--;
         if (HeldMark < 0) {
             HeldMark = 6;
@@ -501,7 +504,7 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     }
     private void SwitchItemUp() {
         Held.Destory();
-        Held.Item_Status_Handler.GetWays = GetWays.Hand;
+        ((ItemBase)Held).OffHand();
         HeldMark++;
         if (HeldMark > 6) {
             HeldMark = 0;
@@ -523,14 +526,13 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     public void HeldUpdate() {
         if (Held != Items.Empty) {
             Held.Beheld(Hand);
-            Held.Item_Status_Handler.GetWays = GetWays.Tool;
+            ((ItemBase)Held).OnHand();
             if (Held.Item_Status_Handler.DisplayWays.Display_things) {
                 ((Container)Held).UpdateDisplay();
             }
         }
         else {
             Held.Destory();
-            Held = Items.Empty;
         }
     }
 
@@ -556,6 +558,7 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
                             var outhits = Physics.RaycastAll(ray, this.Character_Property.CharacterStaticProperties.StaticValues_Setting.DistanceToMark);
                             if (outhits.Length > 0) {
                                 for (int j = 0; j < outhits.Length; j++) {
+                                    
                                     var Dictance2 = outhits[j].point.Distance2(this.Head.transform.position);
                                     if (Dictance2 < MinDistanceTable[MinDistanceTable.Count - 1].First) {
                                         if (outhits[j].collider.gameObject.TryGetComponent<ObjectOnTheGround>(out var objectOnTheGround)) {
@@ -659,8 +662,10 @@ public abstract class Character_INFO_Handle_Layer_Base : Character_INFO_Handler
     private void UseUpThings(Item Target) {
         Held.Item_Status_Handler.GetWays = GetWays.Hand;
         Target.InterfaceUse6(Held, out var itemoutEx);
-        Held = itemoutEx;
-        HeldUpdate();
+        if (!object.ReferenceEquals(Held, itemoutEx)) {
+            Held = itemoutEx;
+            HeldUpdate();
+        }
     }
     private void GetUpThings(Item item) {
         this.Bag.GetItemFormGround(item);
@@ -771,19 +776,6 @@ public enum InputType {
 
 
 
-public enum Moral_Axis
-{
-    Good,
-    Neutral,
-    Evil,
-}
-public enum Order_Horizontal
-{
-    Lawful,
-    Neutral,
-    Chaotic,
-}
-
 public class Character_Property
 {
     public CharacterStaticProperties.CharacterStaticProperties CharacterStaticProperties;
@@ -835,7 +827,6 @@ namespace CharacterRuntimeProperties
     [Serializable]
     public class CharacterRuntimeValues
     {
-        public RuntimeValues.RuntimeValues_Moral RuntimeValues_Moral = new RuntimeValues.RuntimeValues_Moral();
         public RuntimeValues.RuntimeValues_Shape RuntimeValues_Shape = new RuntimeValues.RuntimeValues_Shape();
         public RuntimeValues.RuntimeValues_State RuntimeValues_State = new RuntimeValues.RuntimeValues_State();
         public RuntimeValues.RuntimeValues_HeldState RuntimeValues_HeldState = new RuntimeValues.RuntimeValues_HeldState();
@@ -862,12 +853,6 @@ namespace CharacterRuntimeProperties
             public float DEF_Current__Initial = 0;
             public float PP_Current__Initial = 100;
             public float PP_Curren_Max__Initial = 100;
-        }
-        [Serializable]
-        public class RuntimeValues_Moral
-        {
-            public Moral_Axis moral_Axis;
-            public Order_Horizontal order_Horizontal;
         }
         [Serializable]
         public class RuntimeValues_Shape
@@ -930,7 +915,7 @@ namespace CharacterRuntimeProperties
         }
         public class RuntimeTemps_Dialog
         {
-            public DialogMachineGroup DialogMachineGroup = new DialogMachineGroup();
+            public DialogMachineGroup DialogMachineGroup = new DialogMachineGroup(null);
         }
         public class RuntimeTemps_Ins
         {
@@ -971,11 +956,6 @@ namespace CharacterRuntimeProperties
         public CharacterRuntimeProperties(CharacterStaticProperties.CharacterStaticProperties characterStaticProperties,CharacterPreInstanceProperties.CharacterPreInstanceProperties characterPreInstanceProperties) {
             if (!this.inited) {
                 this.CharacterID = characterStaticProperties.CharacterID;
-
-                RuntimeValues.RuntimeValues_Moral Init_Moral = this.CharacterRuntimeValues.RuntimeValues_Moral;
-                CharacterStaticProperties.StaticValues.StaticValues_Moral staticValues_Moral = characterStaticProperties.StaticValues_Moral;
-                Init_Moral.moral_Axis = staticValues_Moral.moral_Axis;
-                Init_Moral.order_Horizontal = staticValues_Moral.order_Horizontal;
 
                 RuntimeValues.RuntimeValues_State Init_State = this.CharacterRuntimeValues.RuntimeValues_State;
                 CharacterStaticProperties.StaticValues.StaticValues_State staticValues_State = characterStaticProperties.StaticValues_State;
@@ -1025,7 +1005,6 @@ namespace CharacterStaticProperties
     public class CharacterStaticProperties
     {
         public int CharacterID = -1;
-        public StaticValues.StaticValues_Moral StaticValues_Moral = new StaticValues.StaticValues_Moral();
         public StaticValues.StaticValues_State StaticValues_State = new StaticValues.StaticValues_State();
         public StaticValues.StaticValues_HeldState StaticValues_HeldState = new StaticValues.StaticValues_HeldState();
         public StaticValues.StaticValues_Setting StaticValues_Setting = new StaticValues.StaticValues_Setting();
@@ -1046,12 +1025,6 @@ namespace CharacterStaticProperties
             public float DEF_Origin = 0;
             public float PP_Origin = 100;
             public float PP_Origin_Max = 100;
-        }
-        [Serializable]
-        public class StaticValues_Moral
-        {
-            public Moral_Axis moral_Axis;
-            public Order_Horizontal order_Horizontal;
         }
         [Serializable]
         public class StaticValues_HeldState

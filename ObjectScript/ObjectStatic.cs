@@ -1,6 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+public interface Object_Detail
+{
+    ObjectOnGroundBase Object_Handler { get; }
+}
 public interface ObjectOnTheGround
 {
     Object_Values_Handler Object_Values_Handler { get; }
@@ -16,6 +21,7 @@ public interface Object_Values_Handler
 
 public interface ObjectOnGroundBase
 {
+    void Refresh();
     void CollisionEnterBase(Collision collision);
     void CollisionStayBase(Collision collision);
     void CollisionExitBase(Collision collision);
@@ -26,7 +32,7 @@ public interface ObjectOnGroundBase
 }
 public abstract class ObjectBase : ObjectOnGroundBase
 {
-
+    public ObjectOnGroundBase Object_Handler => this; 
     void ObjectOnGroundBase.CollisionEnterBase(Collision collision) {
         this.CollisionEnter(collision);
         this.CollisionEnter(collision.collider);
@@ -140,4 +146,5 @@ public abstract class ObjectBase : ObjectOnGroundBase
 
     public abstract void UpdateBase();
 
+    public virtual void Refresh() { }
 }

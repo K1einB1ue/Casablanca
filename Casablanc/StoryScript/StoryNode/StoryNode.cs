@@ -105,7 +105,7 @@ public enum Story_UpdateType {
     Disable,
 }
 public interface INode {
-    void NodeInit();
+    NodePipelineInstance NodePipelineFactory1 { get; }
     void Update();
     NodeType GetNodeType();
     void ReStruct();
@@ -118,7 +118,7 @@ public interface IStory {
 
 }
 [Serializable]
-public abstract class StoryNodeBase : NodeStatic, IStory {
+public abstract class StoryNodeBase : NodeBase, IStory {
     [SerializeField]
     private Story_UpdateType updateType = Story_UpdateType.Unable;
     public virtual void Update(out bool change) { change = false; }
@@ -131,16 +131,52 @@ public abstract class StoryNodeBase : NodeStatic, IStory {
         this.updateType = Story_UpdateType.Unable;
     }
 }
-
-public abstract class NodeStatic : Node, INode
+public abstract class ComponentNodeBase : NodeBase
 {
+    public override NodeType GetNodeType() {
+        return NodeType.Component;
+    }
+}
+public abstract class NodeBase : Node, INode
+{
+    public virtual NodePipelineInstance NodePipelineFactory1 { get { Debug.LogError("错误地调用了工厂"); return nodePipelineFactory1; } }
+    public static NodePipelineInstance nodePipelineFactory1;
+    public virtual NodePipelineInstance NodePipelineFactory2 { get { Debug.LogError("错误地调用了工厂"); return nodePipelineFactory2; } }
+    public static NodePipelineInstance nodePipelineFactory2;
+    public virtual NodePipelineInstance NodePipelineFactory3 { get { Debug.LogError("错误地调用了工厂"); return nodePipelineFactory3; } }
+    public static NodePipelineInstance nodePipelineFactory3;
     [HideInInspector]
     public StoryBlock StoryBlock => (StoryBlock)this.graph;
-    public virtual void NodeInit() { }
     public virtual void Update() { }
     public virtual NodeType GetNodeType() { return NodeType.Node; }
     public virtual void ReStruct() { }
 }
+
+public static class NodeStatic
+{
+
+    public const string CommonPortName = "节点统一化";
+    public static IEnumerable<NodeBase> Node_On_Port(this NodeBase This, string PortParam = CommonPortName) {
+        NodePort port = This.GetInputPort(PortParam);
+        if (port != null) {
+            if (port.ConnectionCount > 0) {
+                foreach (var con in port.GetConnections()) {
+                    if (con.node is NodeBase) {
+                        yield return ((NodeBase)con.node);
+                    }
+                    else {
+                        Debug.LogError("错误的节点");
+                    }
+                }
+            }
+        }
+        else {
+            Debug.LogError("错误的接口");
+        }
+    }
+
+}
+
 [Serializable]
 public class Link_Story { }
 
@@ -150,6 +186,6 @@ public enum NodeType {
     TriggerNode,
     DialogNode,
     TestNode,
-    StoryBlockNode,
     Store,
+    Component,
 }

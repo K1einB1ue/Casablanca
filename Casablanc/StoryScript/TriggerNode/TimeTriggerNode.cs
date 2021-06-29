@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 [CreateNodeMenu("时间触发器", menuName = "触发器节点/时间触发器")]
-public class TimeTriggerNode : NodeStatic
+public class TimeTriggerNode : NodeBase
 {
     [Output] public bool @符合触发;
     public static int TimeH, TimeM;

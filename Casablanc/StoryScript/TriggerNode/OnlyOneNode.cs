@@ -6,7 +6,7 @@ using XNode;
 using XNodeEditor;
 
 [CreateNodeMenu("唯一节点", menuName = "触发器逻辑节点/唯一节点", order = 7)]
-public class OnlyOneNode : NodeStatic
+public class OnlyOneNode : NodeBase
 {
     [Input(connectionType = ConnectionType.Override, backingValue = ShowBackingValue.Never,dynamicPortList = true)] public bool @触发输入;
     [Output(connectionType = ConnectionType.Multiple, dynamicPortList = true)]                                      public bool @触发输出;

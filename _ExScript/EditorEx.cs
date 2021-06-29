@@ -144,6 +144,37 @@ public static class EditorEx
         return ret;
     }
 
+    public static Rect CustEnumProperty(Rect PositionBefore,SerializedProperty property,GUIContent GUIContent) {
+        Rect ret = GetNormalRect(PositionBefore);
+        using (var Scope = new EditorGUI.ChangeCheckScope()) {
+            var Fields = Type.GetType(property.FindPropertyRelative("First").stringValue).GetFields(BindingFlags.Static | BindingFlags.Public);
+            var NumStore = property.FindPropertyRelative("Second");
+            int Select = -1;
+            List<string> Enum = new List<string>();
+            Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
+            for(int i = 0; i < Fields.Length; i++) {
+                Enum.Add(Fields[i].Name);                
+                if ((int)Fields[i].GetValue(null) == NumStore.intValue) {                   
+                    Select = i;                   
+                }
+                keyValuePairs.Add(i, (int)Fields[i].GetValue(null));
+            }
+            EditorGUI.LabelField(PositionBefore, GUIContent);
+
+            Rect EnumRect = new Rect() {
+                y = PositionBefore.y,
+                x = PositionBefore.x + 100,
+                width = EditorGUIUtility.currentViewWidth-200,
+                height = PositionBefore.height,
+            };
+            Select = EditorGUI.Popup(EnumRect, Select, Enum.ToArray());
+
+            if (Scope.changed) {
+                NumStore.intValue = keyValuePairs[Select];
+            }
+        }
+        return ret;
+    }
 
 
     public static object GetObjectByPath(object target, string Path, int Ignore = 0) {

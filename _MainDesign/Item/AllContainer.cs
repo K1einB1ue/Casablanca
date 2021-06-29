@@ -9,7 +9,7 @@ public static class AllContainer
     /// </summary>
 
     [Item(ItemType.Container, 0)]
-    public class CharacterStaticBag : ContainerStatic 
+    public class CharacterStaticBag : ContainerBase 
     {
         public Character Character;
         public CharacterStaticBag() : base(7) { }
@@ -20,7 +20,7 @@ public static class AllContainer
     }
 
     [Item(ItemType.Container, 1)]
-    public class NormalBackpack :ContainerStatic
+    public class NormalBackpack :ContainerBase
     {
         /*
         static NormalBackpack() {

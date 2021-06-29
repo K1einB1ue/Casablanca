@@ -80,22 +80,14 @@ public class StoryBlock : NodeBlockBase
 public interface StaticINode {
     void StaticUpdate();
 }
-public abstract class NodeBlockBase : NodeGraph, INode,StaticINode
-{
+public abstract class NodeBlockBase : NodeGraph,StaticINode
+{ 
     protected Dictionary<int, StoryNode> StoryNodes = new Dictionary<int, StoryNode>();
 
-    NodeType INode.GetNodeType() {
-        return NodeType.StoryBlockNode;
-    }
 
     public virtual void Update() {
         foreach (var node in StoryNodes) {
             ((INode)node.Value).Update();
-        }
-    }
-    void INode.NodeInit() {
-        foreach (var node in StoryNodes) {
-            ((INode)node.Value).NodeInit();
         }
     }
 

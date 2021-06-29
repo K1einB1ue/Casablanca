@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 [CreateNodeMenu("或", menuName = "触发器逻辑节点/或",order = 1)]
-public class TriggerLogicOr : NodeStatic
+public class TriggerLogicOr : NodeBase
 {
     [Input(dynamicPortList = true)] public bool @触发输入;
     [Output] public bool @触发输出;

@@ -2,15 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class DialogOut : MonoBehaviour
 {
     public GameObject Instance;
     public Queue<DialogOutNode> DialogOutNodes = new Queue<DialogOutNode>();
 
-
     private void OnEnable() {
-        StoryChannelManager.SelectDialogEvent.AddListener(this.UpdateNewDialog); 
+        EventManager.StoryChannelManager.OnSelectDialog.AddListenerOnce(this.UpdateNewDialog); 
     }
 
     public void UpdateNewDialog(string Dialog) {
@@ -20,6 +20,7 @@ public class DialogOut : MonoBehaviour
         while(DialogOutNodes.Count > 10) {
             GameObject.Destroy(DialogOutNodes.Dequeue().gameObject);
         }
+
     }
 
     

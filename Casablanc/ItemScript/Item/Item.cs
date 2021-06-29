@@ -37,7 +37,7 @@ public enum ItemType
     Tool = 6,
     Materials = 7,
 }
-public class Empty : ContainerStatic
+public class Empty : ContainerBase
 {
     public Empty() : base(ItemType.Empty) { }
 
@@ -112,6 +112,26 @@ public static class Items
         }
         else {
             KeyValuePair<ItemType, int> Key = new KeyValuePair<ItemType, int>(itemType, ItemID);
+            if (Generators.TryGetValue(Key, out Func<Item> Func)) {
+                return Func();
+            }
+        }
+        return Empty;
+    }
+    /// <summary>
+    /// 调用后务必绑定ItemProperty
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public static Item GetItemByItemTypeAndItemIDWithoutItemProperty(Item item) {
+        if (item.Type == ItemType.Error) {
+            Debug.LogError("未定义的场景初始化物品");
+        }
+        else if (item.Type == ItemType.Empty && item.ID == 0) {
+            return Empty;
+        }
+        else {
+            KeyValuePair<ItemType, int> Key = new KeyValuePair<ItemType, int>(item.Type, item.ID);
             if (Generators.TryGetValue(Key, out Func<Item> Func)) {
                 return Func();
             }
@@ -228,7 +248,7 @@ public interface ItemScript
     void OnUse();
     
 }
-public interface Item : Item_Detail
+public interface Item : Item_Detail,ItemTimer
 {
 
     int ID { get; }
@@ -243,7 +263,15 @@ public interface Item : Item_Detail
     float Mass { get; }
     bool CanGetNormally { get; }
     void OuterClear();
+    /// <summary>
+    /// 销毁GameObject和背包引用
+    /// </summary>
+    void DestoryFully();
+    /// <summary>
+    /// 销毁GameObject
+    /// </summary>
     void Destory();
+
     void InterfaceUse1();            
     void InterfaceUse2();
     void InterfaceUse3();
@@ -298,14 +326,11 @@ public abstract class ItemBase : ObjectBase, Item, ItemScript, ItemUI
     public virtual Item_INFO_Handler Info_Handler
     {
         get {
-            if (this.INFO_Handler == null) {
-                this.INFO_Handler = new Item_INFO_Handle_Layer_Normal();
-            }
+            this.INFO_Handler ??= new Item_INFO_Handle_Layer_Normal();
             return this.INFO_Handler;
         }
         set {
             this.INFO_Handler = value;
-
         }
     }
     
@@ -515,6 +540,10 @@ public abstract class ItemBase : ObjectBase, Item, ItemScript, ItemUI
     public virtual void Destory() {
         this.Info_Handler.Destory();
     }
+    public void DestoryFully() {
+        ((Item)this).OuterClear();
+        this.Destory();
+    }
     public virtual void BeHeldButDrop(Transform transform) {
         this.Info_Handler.BeHeldButDrop(transform);
         this.Info_Handler.AddItemComponent(this);
@@ -609,11 +638,14 @@ public abstract class ItemBase : ObjectBase, Item, ItemScript, ItemUI
     }
 
     public virtual float Mass { get {
-            float sum = 0;
-            foreach (var ele in this.Info_Handler.Elements) {
-                sum += ele.KG;
+            if (this.Info_Handler.Binded) {
+                float sum = 0;
+                foreach (var ele in this.Info_Handler.Elements) {
+                    sum += ele.KG;
+                }
+                return sum * this.Held;
             }
-            return sum * this.Held;
+            return 0;
         } 
     }
 
@@ -644,7 +676,18 @@ public abstract class ItemBase : ObjectBase, Item, ItemScript, ItemUI
     public virtual void OnDisSelected(MaterialPack materialPack) {
 
     }
+
+
+
+
+
+
+
+
+
     public virtual void OnAttach() { }
+    public virtual void OnHand() { this.Item_Status_Handler.GetWays = GetWays.Tool; }
+    public virtual void OffHand() { this.Item_Status_Handler.GetWays = GetWays.Hand; }
 }
 public class IntroInfo
 {
@@ -919,7 +962,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         }
     }
     public Item_Property Item_Property {
-        get {  return this.item_Property; }
+        get { return this.item_Property; }
         set { this.item_Property = value; }
     }
     public Item_INFO_Handle_Layer_Base() { }
@@ -933,7 +976,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     public virtual void OnBinded() {
         RigidBody_Init();
     }
-    
+
     #region INFO
     void Item_INFO_Handler.Binding(Item_Property Bingding) {
         this.item_Property = Bingding;
@@ -979,11 +1022,11 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     }
     public void ThermodynamicsAdjustment(float Energy) {
         float Element_SHC = 0;
-        foreach(var element in this.Elements) {
+        foreach (var element in this.Elements) {
             Element_SHC += element.SHC;
         }
         float Div = Energy / Element_SHC;
-        foreach(var element in this.Elements) {
+        foreach (var element in this.Elements) {
             element.ThermodynamicsAdjustment(Div * element.SHC);
         }
     }
@@ -1012,12 +1055,12 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
 
     #region Element
     IEnumerable<Element> Item_Element_Handler.Elements { get { foreach (var ele in this.Elements) { yield return ele; } } }
-    IEnumerable<Element> Item_Element_Handler.Liquid    => ElementMatch((var) => { return var.ElementState == ElementState.Liquid   ; });
-    IEnumerable<Element> Item_Element_Handler.Solid     => ElementMatch((var) => { return var.ElementState == ElementState.Solid    ; });
-    IEnumerable<Element> Item_Element_Handler.Gas       => ElementMatch((var) => { return var.ElementState == ElementState.Gas      ; });
-    IEnumerable<Element> Item_Element_Handler.Plasma    => ElementMatch((var) => { return var.ElementState == ElementState.Plasma   ; });
+    IEnumerable<Element> Item_Element_Handler.Liquid => ElementMatch((var) => { return var.ElementState == ElementState.Liquid; });
+    IEnumerable<Element> Item_Element_Handler.Solid => ElementMatch((var) => { return var.ElementState == ElementState.Solid; });
+    IEnumerable<Element> Item_Element_Handler.Gas => ElementMatch((var) => { return var.ElementState == ElementState.Gas; });
+    IEnumerable<Element> Item_Element_Handler.Plasma => ElementMatch((var) => { return var.ElementState == ElementState.Plasma; });
     public IEnumerable<Element> ElementMatch(Func<Element, bool> match) {
-        foreach(var ele in this.Elements) {
+        foreach (var ele in this.Elements) {
             if (match(ele)) {
                 yield return ele;
             }
@@ -1046,9 +1089,9 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         return false;
     }
 
-    
+
     /// <summary>
-    /// 返回剩余数量
+    /// 返回添加后超过上限 所剩余数量
     /// </summary>
     public virtual int Addheld(int num) {
         if (this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial + num > this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current_Max__Initial) {
@@ -1062,7 +1105,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         }
     }
     /// <summary>
-    /// 返回真实填充的数量(即原放入减去超出上限的部分)
+    /// 返回真实减少的数量
     /// </summary>
     public virtual int Decheld(int num) {
         if (this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Held.Held_Current__Initial - num <= 0) {
@@ -1112,9 +1155,8 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     #region UI
     ItemStaticProperties.ItemStaticGraphs Item_UI_Handler.Graph => this.Item_Property.ItemStaticProperties.ItemStaticGraphs;
     public float HPrate => this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Current__Initial / this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_State.HP_Curren_Max__Initial;
-    
-    Vector3 Item_UI_Handler.Center
-    {
+
+    Vector3 Item_UI_Handler.Center {
         get {
             Vector3 temp = new Vector3();
             if (this.Instance) {
@@ -1130,8 +1172,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
             return temp;
         }
     }
-    Vector2 Item_UI_Handler.CenterInScreen
-    {
+    Vector2 Item_UI_Handler.CenterInScreen {
         get {
             Vector3 temp = Camera.main.WorldToScreenPoint(((Item_UI_Handler)this).Center, Camera.MonoOrStereoscopicEye.Mono);
             return new Vector2(temp.x, temp.y);
@@ -1149,7 +1190,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
     public float Mass { get => this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_Mass.Mass; set {
             this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_Mass.Mass = value;
             if (this.Instance) {
-                if(this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
+                if (this.Instance.TryGetComponent<Rigidbody>(out var rigidbody)) {
                     rigidbody.mass = value;
                 }
             }
@@ -1189,9 +1230,9 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
                             if (detail.Z__RotationFreeze) {
                                 rigid.constraints |= RigidbodyConstraints.FreezeRotationZ;
                             }
-                        }                       
+                        }
                         this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_PreInstance.RigidBodyDetail = null;
-                    }                    
+                    }
                 }
             }
         }
@@ -1216,7 +1257,7 @@ public abstract class Item_INFO_Handle_Layer_Base : Item_INFO_Handler
         this.Item_Property.ItemRuntimeProperties.ItemRuntimeValues.RuntimeValues_Rigid.HaveRigidBody = false;
     }
 
-    public ObjectOnTheGround ObjectOnTheGround => this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_Ins.objectOnTheGround;   
+    public ObjectOnTheGround ObjectOnTheGround => this.Item_Property.ItemRuntimeProperties.ItemRuntimeTemps.RuntimeTemps_Ins.objectOnTheGround;
     public GameObject Instance => InstanceObj;
     bool Item_Object_Handler.IsHeld => BeHelding;
     bool Item_Object_Handler.IsInstanced => Instanced;
@@ -1354,10 +1395,13 @@ public partial class Item_Property
     public ItemStaticProperties.ItemStaticProperties ItemStaticProperties;
 
 
-    public Item_Property() { }
     public Item_Property(ItemType ItemType,int ItemID, ItemPreInstanceProperties.ItemPreInstanceProperties itemPreInstanceProperties) {
         this.ItemStaticProperties = StaticPath.ItemLoad[ItemType, ItemID].ItemStaticProperties;
         this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties,itemPreInstanceProperties);
+    }
+    public Item_Property(Item CopyTypeAndID, ItemPreInstanceProperties.ItemPreInstanceProperties itemPreInstanceProperties) {
+        this.ItemStaticProperties = StaticPath.ItemLoad[CopyTypeAndID.Type, CopyTypeAndID.ID].ItemStaticProperties;
+        this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, itemPreInstanceProperties);
     }
     public Item_Property(ItemRuntimeProperties.ItemRuntimeProperties itemRuntimeProperties) {
         if (itemRuntimeProperties.Detail_Info == RuntimeProperty_Detail_Info.Properties) {
@@ -1366,8 +1410,13 @@ public partial class Item_Property
                 this.ItemStaticProperties = StaticPath.ItemLoad[this.ItemRuntimeProperties.ItemType, this.ItemRuntimeProperties.ItemID].ItemStaticProperties;
             }
             else if (itemRuntimeProperties.Detail_Type == RuntimeProperty_Detail_Type.Default) {
-                this.ItemStaticProperties = StaticPath.ItemLoad[itemRuntimeProperties.ItemType, itemRuntimeProperties.ItemID].ItemStaticProperties;
-                this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
+                try {
+                    this.ItemStaticProperties = StaticPath.ItemLoad[itemRuntimeProperties.ItemType, itemRuntimeProperties.ItemID].ItemStaticProperties;
+                    this.ItemRuntimeProperties = new ItemRuntimeProperties.ItemRuntimeProperties(this.ItemStaticProperties, null);
+                }
+                catch {
+                    Debug.Log("");
+                }
             }
         }
         else if(itemRuntimeProperties.Detail_Info== RuntimeProperty_Detail_Info.Store) {
@@ -1493,7 +1542,9 @@ namespace ItemRuntimeProperties
 
 
     [Serializable]
-    public class ItemRuntimeContext : ItemContext { }
+    public class ItemRuntimeContext : ItemContext {
+        
+    }
 
 
 
@@ -1714,7 +1765,7 @@ namespace ItemStaticProperties
     {
         public ItemStaticGraphs ItemStaticGraphs = new ItemStaticGraphs();
         public ItemType ItemType = ItemType.Empty;
-        public int ItemID = 0;        
+        public int ItemID = 0;
         public ItemStaticValues ItemStaticValues = new ItemStaticValues();
         
     }
@@ -1944,6 +1995,9 @@ public class ItemStaticContextPropertiesEditor : PropertyDrawer
                         case 4:
                             Next = EditorEx.NewProperty(Next, property.FindPropertyRelative("StringData").GetArrayElementAtIndex(PosInList), Content);
                             break;
+                        case 5:
+                            Next = EditorEx.CustEnumProperty(Next, property.FindPropertyRelative("EnumData").GetArrayElementAtIndex(PosInList), Content);
+                            break;
                         default: Debug.Log("编辑器错误"); break;
                     }
 
@@ -1963,8 +2017,12 @@ public class ItemStaticContextPropertiesEditor : PropertyDrawer
 [CustomPropertyDrawer(typeof(ItemRuntimeProperties.ItemRuntimeContext))]
 public class ItemRuntimeContextPropertiesEditor : PropertyDrawer
 {
+    public static bool Inited = false;
     public static bool IsOpen = false;
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+        
+        property.serializedObject.Update();
+
         Rect Next = EditorEx.GetStartRect(position);
         Next = EditorEx.GetNormalRect(Next);
         EditorGUIUtility.labelWidth = 60;
@@ -1974,75 +2032,78 @@ public class ItemRuntimeContextPropertiesEditor : PropertyDrawer
         ItemNodeDynamic Node = null;
         //if (property.serializedObject.targetObject is ItemInfoStore) {
 
-            Node = ((ItemNodeDynamic)EditorEx.GetObjectByPath(property.serializedObject.targetObject, property.propertyPath, 4));
+        Node = ((ItemNodeDynamic)EditorEx.GetObjectByPath(property.serializedObject.targetObject, property.propertyPath, 4));
+
+
+        if (!
+          (Node.GetItemTypeAndItemId().Item1 == ItemType.Container && Node.GetItemTypeAndItemId().Item2 == 0) ||
+          (Node.GetItemTypeAndItemId().Item1 == ItemType.Empty && Node.GetItemTypeAndItemId().Item2 == 0) ||
+          (Node.GetItemTypeAndItemId().Item1 == ItemType.Error)) { 
+
+
+
             itemStore = StaticPath.ItemLoad[Node.GetItemTypeAndItemId().Item1, Node.GetItemTypeAndItemId().Item2];
 
 
-        //}
-        //else if (property.serializedObject.targetObject is ItemOnTheGround) {
-        //    ItemOnTheGround item = ((ItemOnTheGround)property.serializedObject.targetObject);
-        //    foreach(var field in item.GetType().GetFields()) {
-        //        Debug.Log(field.Name);
-        //    }
-        //    Debug.Log(property.propertyPath);
-        //    //ItemNodeDynamic temp = ((ItemNodeDynamic)EditorEx.GetObjectByPath(property.serializedObject.targetObject, property.propertyPath, 4));
+            //}
+            //else if (property.serializedObject.targetObject is ItemOnTheGround) {
+            //    ItemOnTheGround item = ((ItemOnTheGround)property.serializedObject.targetObject);
+            //    foreach(var field in item.GetType().GetFields()) {
+            //        Debug.Log(field.Name);
+            //    }
+            //    Debug.Log(property.propertyPath);
+            //    //ItemNodeDynamic temp = ((ItemNodeDynamic)EditorEx.GetObjectByPath(property.serializedObject.targetObject, property.propertyPath, 4));
             
 
-        //}
+            //}
 
 
-        if (itemStore != null) {
-            if (IsOpen = EditorGUI.Foldout(Next, IsOpen, "动态存储映射")) {
-                Next = EditorEx.GetNormalRect(Next);
-                var ItemContextMapping = itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping;
-                var RuntimePacks = ItemContextMapping.RuntimePacks;
+            if (itemStore != null) {
+                if (IsOpen = EditorGUI.Foldout(Next, IsOpen, "动态存储映射")) {
+                    Next = EditorEx.GetNormalRect(Next);
 
-                using (new EditorGUI.IndentLevelScope()) {
-                    for (int i = 0; i < RuntimePacks.Count; i++) {
-                        var RuntimePack = RuntimePacks[i];
-                        var name = RuntimePack.PropertyName;
-                        var ___Data = RuntimePack.___Data;
-                        var PosInList = RuntimePack.PosInList;
-                        var Content = new GUIContent(name);
+                    using (var scope = new EditorGUI.ChangeCheckScope()) {
 
-                        if (itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.Inited) {
-                            while (Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.IntData.Count < itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.IntSizeR) {
-                                Debug.Log("填充了Int");
-                                Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.IntData.Add(0);
-                            }
-                            while (Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.BoolData.Count < itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.BoolSizeR) {
-                                Debug.Log("填充了Bool");
-                                Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.BoolData.Add(false);
-                            }
-                            while (Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.FloatData.Count < itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.FloatSizeR) {
-                                Debug.Log("填充了Float");
-                                Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.FloatData.Add(0);
-                            }
-                            while (Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.StringData.Count < itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.StringSizeR) {
-                                Debug.Log("填充了String");
-                                Node.ItemRuntimeInfoPackage.ItemRuntimeProperties.ItemRuntimeValues.ItemRuntimeContext.StringData.Add("");
+                        var ItemContextMapping = itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping;
+
+                        var RuntimePacks = ItemContextMapping.RuntimePacks;
+
+                        using (new EditorGUI.IndentLevelScope()) {
+                            for (int i = 0; i < RuntimePacks.Count; i++) {
+                                var RuntimePack = RuntimePacks[i];
+                                var name = RuntimePack.PropertyName;
+                                var ___Data = RuntimePack.___Data;
+                                var PosInList = RuntimePack.PosInList;
+                                var Content = new GUIContent(name);
+
+                                switch (___Data) {
+                                    case 1:
+                                        Next = EditorEx.CustomIntProperty(Next, property.FindPropertyRelative("IntData").GetArrayElementAtIndex(PosInList), Content);
+                                        break;
+                                    case 2:
+                                        Next = EditorEx.CustomBoolProperty(Next, property.FindPropertyRelative("BoolData").GetArrayElementAtIndex(PosInList), Content);
+                                        break;
+                                    case 3:
+                                        Next = EditorEx.CustomFloatProperty(Next, property.FindPropertyRelative("FloatData").GetArrayElementAtIndex(PosInList), Content);
+                                        break;
+                                    case 4:
+                                        Next = EditorEx.NewProperty(Next, property.FindPropertyRelative("StringData").GetArrayElementAtIndex(PosInList), Content);
+                                        break;
+                                    default: Debug.Log("编辑器错误"); break;
+                                }
+
                             }
                         }
 
-                        switch (___Data) {
-                            case 1:
-                                Next = EditorEx.CustomIntProperty(Next, property.FindPropertyRelative("IntData").GetArrayElementAtIndex(PosInList), Content);
-                                break;
-                            case 2:
-                                Next = EditorEx.CustomBoolProperty(Next, property.FindPropertyRelative("BoolData").GetArrayElementAtIndex(PosInList), Content);
-                                break;
-                            case 3:
-                                Next = EditorEx.CustomFloatProperty(Next, property.FindPropertyRelative("FloatData").GetArrayElementAtIndex(PosInList), Content);
-                                break;
-                            case 4:
-                                Next = EditorEx.NewProperty(Next, property.FindPropertyRelative("StringData").GetArrayElementAtIndex(PosInList), Content);
-                                break;
-                            default: Debug.Log("编辑器错误"); break;
-                        }
 
+                        if (scope.changed) {
+                            Debug.Log("Test");
+                        }
                     }
                 }
             }
+
+
         }
     }
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {

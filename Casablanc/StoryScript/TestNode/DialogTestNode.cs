@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 [CreateNodeMenu("对话测试节点", menuName = "测试节点/对话测试节点", order = 0)]
-public class DialogTestNode : NodeStatic
+public class DialogTestNode : NodeBase
 {
-    [Output(ShowBackingValue.Never, connectionType = ConnectionType.Multiple,typeConstraint = TypeConstraint.Strict)] public Link_Dialog @对话测试;
+    [Output(ShowBackingValue.Never, connectionType = ConnectionType.Multiple,typeConstraint = TypeConstraint.Strict)] public string @对话测试;
     private bool trigger = false;
 
     public override void Update() {

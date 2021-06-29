@@ -43,7 +43,7 @@ public interface Container : Item
     IEnumerable<Item> ItemsInBag { get; }
     void UpdateDisplay();
 }
-public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
+public abstract class ContainerBase : ItemBase,Container, ScriptContainer
 {
     public override bool IsContainer => true;
     StoragMethodAdjustment ScriptContainer.StoragMethod { get { return this.storagMethodAdjustment; } set { this.storagMethodAdjustment = value; } }
@@ -65,7 +65,7 @@ public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
     public override void Use2() {
         ((Container)this).DropAllDel();
     }
-    public ContainerStatic(int size) {
+    public ContainerBase(int size) {
         this.ContainerState = new ContainerState(size);
     }
 
@@ -73,7 +73,7 @@ public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
     /// 只是给Empty做个标记.并无意义
     /// </summary>
     /// <param name="itemType"></param>
-    public ContainerStatic(ItemType itemType) { }
+    public ContainerBase(ItemType itemType) { }
 
     protected void CheckEmpty() {
         for(int i = 0; i < ContainerState.size; i++) {
@@ -334,7 +334,7 @@ public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
         return true;
     }
     /// <summary>
-    /// 消耗弹药数而不消除实体,让规格限定成为可能;
+    /// 消耗弹药数而不消除实体,可能可以节约GC开销,但是布盒里;
     /// </summary>
     /// <param name="Pos">子弹在背包中的位置</param>
     /// <param name="num">子弹消耗的量</param>
@@ -367,6 +367,7 @@ public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
         return this.ContainerState.size - this.ContainerState.Count;
     }
 
+    #region 序列化
     public override List<ItemNodeDynamic> GetItemNodes() {
         List<ItemNodeDynamic> itemNodes = new List<ItemNodeDynamic>();
         if (((ScriptContainer)this).StoragMethod.storagMethod == StoragMethod.Normal) { 
@@ -401,6 +402,7 @@ public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
         }
         return itemNodes;
     }
+    #endregion
     public virtual void SetItem(int Pos, Item item) {
         if (((ScriptContainer)this).StoragMethod.storagMethod == StoragMethod.Normal) {
             this.ContainerState.Contents[Pos] = item;
@@ -444,12 +446,14 @@ public abstract class ContainerStatic:ItemBase,Container, ScriptContainer
         else {
             while (item.Held > item.Item_Held_Handler.HeldOriginMax) {
                 item.Item_Held_Handler.Decheld(item.Item_Held_Handler.HeldOriginMax);
-                drops.Add(Items.GetItemByItemTypeAndItemIDWithoutItemProperty(item.Type, item.ID));
+                Item tmp = Items.GetItemByItemTypeAndItemIDWithoutItemProperty(item);
+                tmp.Info_Handler.Binding(new Item_Property(item, null));
+                drops.Add(tmp);
             }
             item.Item_Held_Handler.SetMax(item.Item_Held_Handler.HeldOriginMax);
             drops.Add(item);
         }
-        item.Outercontainer.DelItem(item);
+        item.OuterClear();
         return drops;
     }
 

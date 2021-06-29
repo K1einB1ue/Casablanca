@@ -4,11 +4,11 @@ using UnityEngine;
 using XNode;
 
 
-[CreateNodeMenu("链接节点",menuName ="链接节点/链接节点")]
-public class LinkNode : StoryNodeBase 
+[CreateNodeMenu("剧情对话链接节点", menuName ="链接节点/剧情对话链接节点")]
+public class Story_Dialog_LinkNode : StoryNodeBase 
 {
 	[Input] public Link_Story @前置事件;
-	[Output] public Link_Dialog @后置对话;
+	[Output] public string @后置对话;
 
 	public override void PreloadUpdate() {
 		if (((IStory)this).GetUpdateType() == Story_UpdateType.PreEnable) { 

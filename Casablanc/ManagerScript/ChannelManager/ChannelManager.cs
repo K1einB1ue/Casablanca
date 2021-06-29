@@ -32,8 +32,7 @@ public abstract class ChannelManagerBase<ChannelManager,Channel> : SingletonMono
     }
 
     protected virtual void Awake() {
-        List<FieldInfo> Fields = new List<FieldInfo>();
-        Fields.AddRange(typeof(Channel).GetFields());
+        List<FieldInfo> Fields = new List<FieldInfo>(typeof(Channel).GetFields());
         for (int i = 0; i < Fields.Count; i++) {
             if (Fields[i].IsPublic && Fields[i].GetCustomAttributes(typeof(ChannelMessageAttribute), false).Length > 0 && (Fields[i].FieldType == typeof(int) || Fields[i].FieldType == typeof(float))) {
                 var Field = Fields[i];

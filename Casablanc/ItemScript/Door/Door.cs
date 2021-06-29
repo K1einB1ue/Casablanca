@@ -6,12 +6,12 @@ public interface Door : Container
 {
     public DoorState DoorState { get; set; } 
 }
-public abstract class DoorStatic : ContainerStatic, Door
+public abstract class DoorBase : ContainerBase, Door
 {
     public DoorState DoorState { get { doorState ??= new DoorState(this); return doorState; } set => doorState = value; }
     private DoorState doorState;
 
-    public DoorStatic(int size) : base(size) { }
+    public DoorBase(int size) : base(size) { }
     
 
 }

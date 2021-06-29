@@ -115,6 +115,8 @@ public static class UIS
         }
     }
 
+
+
     //[UI(UI_TYPE.StaticSon,3,0)]
     //public class GunBar : UIBase
     //{
@@ -160,18 +162,14 @@ public static class UIS
 
         public static TextAsset Dialog;
         public override void update() {
-            this.Enable(false);
+            this.Enable(true);
             base.update();
         }
         public override void Update() {
-            DrawDialog();
+            
         }
 
-        void DrawDialog() {
-            if (Dialog != null) {
 
-            }
-        }
     }
     [UI(UI_TYPE.Static,6)]
     public class ItemIntro : UIBase
@@ -179,7 +177,13 @@ public static class UIS
         public ItemIntro() { }
 
         public override void update() {
-            this.Enable(CharacterManager.Main.Character_UI_Handler.ObjectSelect != null);
+            if(CharacterManager.Main.Character_UI_Handler.ObjectSelect != null) {
+                this.Enable(CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object is Item);
+            }
+            else {
+                this.Enable(false);
+            }
+            
             base.update();
         }
         public override void Update() {
@@ -187,13 +191,11 @@ public static class UIS
         }
 
         public void DrawFrame() {
-            if (CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object is Item) {
                 this.UIgraph.Instance.transform.Find("偏移层").GetComponent<RectTransform>().anchoredPosition3D = ((Item)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).Item_UI_Handler.CenterInScreen;
                 this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("图像").GetComponent<Image>().sprite = ((Item)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).Item_UI_Handler.Graph.StaticGraphs_Sprite.UI_Ingrid;
 
                 this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("物品名").GetComponent<Text>().text = ((Item)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).GetType().ToString();
                 this.UIgraph.Instance.transform.Find("偏移层").Find("主框架").Find("描述").GetComponent<Text>().text = ((ItemUI)CharacterManager.Main.Character_UI_Handler.ObjectSelect.Object).GetItemIntro().GetString();
-            }
         }
     }
 

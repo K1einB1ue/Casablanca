@@ -10,11 +10,7 @@ public static class AllGun
     public class AK_47 : GunStatic
     {
         public AK_47() {
-            ((Gun)this).SetinitState(1);
-
-
-            this.GunState.BulletType = BulletType.B7_62;
-            this.GunState.MagazineTypes = new List<int>() { 2 };
+            this.MagazineTypes = new List<int>() { 2 };
 
 
 
@@ -23,15 +19,12 @@ public static class AllGun
     }
 
 
+
     [Item(ItemType.Gun, 2)]
     public class SACM_1935A : GunStatic
     {
         public SACM_1935A(){
-            ((Gun)this).SetinitState(1);
-
-
-            this.GunState.BulletType = BulletType.B7_62;
-            this.GunState.MagazineTypes = new List<int>() { 2 };
+            this.MagazineTypes = new List<int>() { 2 };
 
 
         }
@@ -46,19 +39,13 @@ public static class AllGun
 public class GunState : StateBase
 {
     public GunState(Item item) : base(item) { }
-    /// <summary>
-    /// 也就是弹夹的ID
-    /// </summary>
-    public List<int> MagazineTypes;
-    /// <summary>
-    /// 子弹类型
-    /// </summary>
-    public BulletType BulletType = BulletType.B7_62;
-    /// <summary>
-    /// 烟雾类型
-    /// </summary>
-    public ShootMode ShootMode = ShootMode.OneByOne;
 
+
+
+
+    public ShootMode ShootMode = ShootMode.OneByOne;
+    [LoadProperties(PropertyType.Static)]
+    public BulletType BulletType { get => (BulletType)This.Get(nameof(BulletType)); set => This.Set(nameof(BulletType), (int)value); }
     [LoadProperties(PropertyType.Static)]
     public int ShootBulletNum { get => (int)This.Get(nameof(ShootBulletNum)); set => This.Set(nameof(ShootBulletNum), value); }
     [LoadProperties(PropertyType.Static)]

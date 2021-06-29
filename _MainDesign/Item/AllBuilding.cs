@@ -6,14 +6,15 @@ public static class AllBuilding
 {
 
     [Item(ItemType.Building, 1)]
-    public class NormalDoor : DoorStatic
+    public class NormalDoor : DoorBase
     {
-        Item Lock { get => this.Ex_GetItem(0); set => this.Ex_SetItem(0, value); }
+        public static string AnimationParam = "Open";
+        Item Lock { get => this.Container_GetItem(0); set => this.Container_SetItem(0, value); }
         public NormalDoor() : base(1) { }
 
         public override void Use6(Item item, out Item itemoutEX) {
-            this.ActiveLikeADoorWithALock(0, item, out Item itemoutex);
-            itemoutEX = itemoutex;
+            ((ItemTimer)this).Use6Timer.ActiveLikeWithLock(this, 0, item, out var itemoutEx);
+            itemoutEX = itemoutEx;
         }
 
         public override void RenderUpdate() {
@@ -42,23 +43,15 @@ public static class AllBuilding
             this.Animator.SetBool("Open", this.DoorState.Open);
             this.Animator.SetTrigger("Init");
 
-            UseBind(6, ((Door)this).ActiveLikeADoor);
+            UseBind(6, () => { this.DoorState.Open = this.AcitveLikeTwoState(AnimationParam); });
         }
 
 
 
     }
 
-
-    [Item(ItemType.Building, 2,false)]
-    public class WoodenWindow: BuildingStatic<Window>
-    {
-        public WoodenWindow() : base(0) { }
-    }
-
-
     [Item(ItemType.Building, 3)]
-    public class IronDoor: DoorStatic //BuildingStatic<Door>
+    public class IronDoor: DoorBase //BuildingStatic<Door>
     {
         public IronDoor() : base(1) {
             this.ItemIntro = new ItemIntro("讲道理这玩意怎么破坏嘛...\n十分坚硬的铁门");
@@ -76,7 +69,7 @@ public static class AllBuilding
 
 
     [Item(ItemType.Building, 4)]
-    public class DustBin : BuildingStatic<Drawer>
+    public class DustBin : DrawerBase
     {
         public DustBin() : base(1) { }
 
@@ -107,31 +100,55 @@ public static class AllBuilding
 
 
     [Item(ItemType.Building, 5)]
-    public class Gate : DoorStatic
+    public class Gate : DoorBase
     {
-        Item Lock { get => this.Ex_GetItem(0); set => this.Ex_SetItem(0, value); }
+        public static string AnimationParam = "Open";
+        Item Lock { get => this.Container_GetItem(0); set => this.Container_SetItem(0, value); }
 
         public Gate() : base(1) { }
 
         public override void Use6(Item item, out Item itemoutEX) {
-            this.ActiveLikeADoorWithALock(0, item, out Item itemoutex);
-            itemoutEX = itemoutex;
+            ((ItemTimer)this).Use6Timer.ActiveLikeWithLock(this, 0, item, out var itemoutEx);
+            itemoutEX = itemoutEx;
         }
         public override void __SynchronizationAfterItemPropertyConstructor() {       
-            this.Animator.SetBool("Open", this.DoorState.Open);
+            this.Animator.SetBool(AnimationParam, this.DoorState.Open);
             this.Animator.SetTrigger("Init");
 
-            UseBind(6, ((Door)this).ActiveLikeADoor);
+            UseBind(6, () => { this.DoorState.Open = this.AcitveLikeTwoState(AnimationParam); });
         }
     }
 
 
     [Item(ItemType.Building, 6)]
-    public class IronBarrel : BuildingStatic<Drawer>
+    public class IronBarrel : DrawerBase
     {
 
         public IronBarrel() : base(10){ }
 
+
+    }
+
+
+    [Item(ItemType.Building,7)]
+    public class NormalWindow : WindowBase
+    {
+        public static string AnimationParam = "Open";
+        Item Lock { get => this.Container_GetItem(0); set => this.Container_SetItem(0, value); }
+
+        public NormalWindow() : base(1) { }
+
+        public override void Use6(Item item, out Item itemoutEX) {
+            ((Item)this).Use6Timer.ActiveLikeWithLock(this, 0, item, out var itemoutEx);
+            itemoutEX = itemoutEx;
+        }
+
+        public override void __SynchronizationAfterItemPropertyConstructor() {
+            this.Animator.SetBool(AnimationParam, this.WindowState.Open);
+            this.Animator.SetTrigger("Init");
+
+            this.UseBind(6, () => { this.WindowState.Open = this.AcitveLikeTwoState(AnimationParam); });
+        }
 
     }
 }

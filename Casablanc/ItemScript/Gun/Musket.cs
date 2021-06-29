@@ -7,7 +7,7 @@ public class Musket : GunStatic
 
 
     public Musket(){
-        this.magazine = new MagazineStatic();
+        this.magazine = new MagazineBase();
         this.magazine.Outercontainer = this.Outercontainer;
         ((ScriptContainer)this).StoragMethod.storagMethod = StoragMethod.Ignore;
         ((ScriptContainer)this).StoragMethod.IgnoreMap = new List<int>(0);
@@ -15,7 +15,7 @@ public class Musket : GunStatic
 
 
     public override void TryReload() {
-        ((Magazine)this.magazine).TryLoad();
+        ((Magazine)this.magazine).TryReload();
     }
 
     public override List<Item> FindMarchMagazine() {

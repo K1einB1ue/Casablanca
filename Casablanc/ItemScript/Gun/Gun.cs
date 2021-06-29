@@ -23,7 +23,6 @@ public interface Gun
     Vector3 GetRandom();
     Vector3 GetParticle();
     void SetinitMagazine(Magazine magazine);
-    void SetinitState(int BulletID);
     void update();
     void TryReload();
     void TryFocus();
@@ -32,9 +31,9 @@ public interface Gun
 
 }
 
-public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
+public abstract class GunStatic:ContainerBase,Gun, UIGun, GunBool
 {
-    public Item magazine { get => this.Ex_GetItem(0); set => this.Ex_SetItem(0, value); }
+    public Item magazine { get => this.Container_GetItem(0); set => this.Container_SetItem(0, value); }
 
     public int BulletKind
     {
@@ -47,21 +46,21 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
     }
     public GunState GunState { get { gunState ??= new GunState(this); return gunState; } set => gunState = value; }
     private GunState gunState;
-
+    public List<int> MagazineTypes;
 
     public GunStatic():base(1){ }
      
     public virtual void TryFire(){
         if (this.magazine != Items.Empty) {
             if (this.GunState.ShootMode == ShootMode.OneByOne) {
-                if (((Magazine)this.magazine).GetBulletUse(1)) {
+                if (((Magazine)this.magazine).BulletUse(1)) {
                     this.Fire();
                     for (int i = 0; i < 5; i++) {
                         this.Smoke();
                     }
                 }
             }else if (this.GunState.ShootMode == ShootMode.Muliti) {
-                if (((Magazine)this.magazine).GetBulletUse(this.GunState.ShootBulletNum)) {
+                if (((Magazine)this.magazine).BulletUse(this.GunState.ShootBulletNum)) {
                     for (int i = 0; i < this.GunState.ShootBulletNum; i++) {
                         this.Fire();
                         for (int j = 0; j < 5; j++) {
@@ -89,7 +88,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
             }
             else if (this.Outercontainer != null) {
                 List<Item> magazines = ((Gun)this).FindMarchMagazine();
-                magazines.Sort((Item x, Item y) => { return ((Magazine)y).bullet.Held.CompareTo(((Magazine)x).bullet.Held); });
+                magazines.Sort((Item x, Item y) => { return ((Magazine)y).Bullet.Held.CompareTo(((Magazine)x).Bullet.Held); });
                 if (magazines.Count != 0) {
                     this.magazine = magazines[0];
                 }
@@ -104,7 +103,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
             }
             else if (this.Outercontainer != null) {
                 List<Item> magazines = ((Gun)this).FindMarchMagazine();
-                magazines.Sort((Item x, Item y) => { return ((Magazine)y).bullet.Held.CompareTo(((Magazine)x).bullet.Held); });
+                magazines.Sort((Item x, Item y) => { return ((Magazine)y).Bullet.Held.CompareTo(((Magazine)x).Bullet.Held); });
                 if (magazines.Count != 0) {
                     this.magazine = magazines[0];
                 }
@@ -112,13 +111,13 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
         }
     }
     protected virtual void Fire(){
-        ((Bullet)((Magazine)this.magazine).bullet).Shoot(this);
+        ((Bullet)((Magazine)this.magazine).Bullet).Shoot(this);
     }
     public virtual List<Item> FindMarchMagazine() {
         Container temp = this.Outercontainer;
         return temp.FindMatch(item=> {
                 if(item.Type== ItemType.Magazine&&((GunBool)this).IsLegalMagazine(item)) {
-                    if (((Magazine)item).magazineState.BulletID == this.BulletKind) {
+                    if (((Magazine)item).MagazineState.BulletID == this.BulletKind) {
                         return true;
                     }
                 }
@@ -128,13 +127,10 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
 
     public override void Use6(Item item, out Item itemoutEX) {
         if (item.Type == ItemType.Magazine) {
-            if (((Magazine)item).magazineState.BulletID == this.BulletKind&& ((GunBool)this).IsLegalMagazine(item)) {
+            if (((Magazine)item).MagazineState.BulletID == this.BulletKind&& ((GunBool)this).IsLegalMagazine(item)) {
                 if (this.magazine == Items.Empty) {
                     this.magazine = item;
-                    //item.Destory();
-                    //item.Item_Status_Handler.GetWays = GetWays.Tool;
                     itemoutEX = Items.Empty;
-                    //this.UpdateDisplay();
                     return;
                 }
             }
@@ -178,7 +174,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
     }
     public virtual Item GetPushinMagazine(Item magazine) {
         if (magazine.Type == ItemType.Magazine) {
-            if ((((Magazine)magazine).bullet).ID == this.BulletKind) {
+            if ((((Magazine)magazine).Bullet).ID == this.BulletKind) {
                 if (this.magazine!=Items.Empty) {
                     this.magazine = magazine;
                     return Items.Empty;
@@ -189,10 +185,7 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
     }
     public virtual void SetinitMagazine(Magazine magazine) {
         this.magazine = (Item)magazine;
-        this.BulletKind = magazine.bullet.ID;
-    }
-    public virtual void SetinitState(int BulletID) {
-        this.BulletKind = BulletID;
+        this.BulletKind = magazine.Bullet.ID;
     }
     //*****************************UIGUN*******************************************//
     public virtual float GetBulletRate() {
@@ -205,8 +198,8 @@ public abstract class GunStatic:ContainerStatic,Gun, UIGun, GunBool
     }
 
     bool GunBool.IsLegalMagazine(Item magazine) {
-        for(int i = 0; i < this.GunState.MagazineTypes.Count; i++) {
-            if(this.GunState.MagazineTypes[i]== magazine.ID) {
+        for(int i = 0; i < this.MagazineTypes.Count; i++) {
+            if(this.MagazineTypes[i]== magazine.ID) {
                 return true;
             }
         }

@@ -50,14 +50,28 @@ public class DialogMachine : ScriptableObject
 }
 
 
+
 [Serializable]
 public class DialogMachineGroup
 {
     [SerializeField]
-    private List<DialogMachine> GroupStore = new List<DialogMachine>();
+    private DialogMachineGroupPack Source;
     private HashSet<DialogMachine> Group = new HashSet<DialogMachine>();
-    private static StringBuilder stringBuilder = new StringBuilder();
 
+    public DialogMachineGroup DialogMachineGroupSource {
+        get {
+            if (Source) {
+                return Source.Instance;
+            }
+            else {
+                Debug.LogError("潜在的错误调用");
+                return null;
+            }
+        }
+    }
+    public DialogMachineGroup(DialogMachineGroupPack Source) { 
+        this.Source = Source; 
+    }
     public bool PackUp(params DialogMachine[] dialogMachines) {
         bool flag = true;
         for(int i = 0; i < dialogMachines.Length; i++) {
@@ -69,13 +83,6 @@ public class DialogMachineGroup
         bool flag = false;
         foreach (var dialogMachine in dialogMachines) {
             flag = flag || Group.Add(dialogMachine);
-        }
-        return flag;
-    }
-    public bool Remove(params DialogMachine[] dialogMachines) {
-        bool flag = false;
-        for(int i=0;i< dialogMachines.Length; i++) {
-            flag = flag || Group.Remove(dialogMachines[i]);
         }
         return flag;
     }
@@ -95,32 +102,10 @@ public class DialogMachineGroup
         return flag;
     }
 
-    public override string ToString() {
-        stringBuilder.Clear();
-        stringBuilder.Append("(");
-        bool flag = false;      
-
-        foreach(var dialog in Group) {
-            if (flag) {
-                stringBuilder.Append(",");
-            }
-            flag = true;
-            stringBuilder.Append(dialog.name);
-        }
-
-        stringBuilder.Append(")");
-        return stringBuilder.ToString();
-    }
     public void Init() {
-        foreach (var single in GroupStore) {
-            this.Group.Add(single);
-        }
     }
     public void Save() {
-        this.GroupStore.Clear();
-        foreach (var single in Group) {
-            this.GroupStore.Add(single);
-        }
+
     }
 
     public Dialog Dialog {

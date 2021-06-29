@@ -12,7 +12,7 @@ public static class AllTool
     }
 
     [Item(ItemType.Tool, 3)]
-    public class Beer: ContainerStatic
+    public class Beer: ContainerBase
     {
         public Beer() : base(1) {
             this.Use1Timer.SetTimer(1.0f);
@@ -93,7 +93,7 @@ public interface Lighter
     void LightSwitch();
 }
 
-public abstract class LighterStatic:ContainerStatic,Lighter
+public abstract class LighterStatic:ContainerBase,Lighter
 {
     public Battery Battery { get; set; }
     public Timer ElectricityDec = new Timer(60f);
@@ -155,7 +155,7 @@ public interface Battery
 {
 
 }
-public abstract class BatteryStatic : ContainerStatic, Battery
+public abstract class BatteryStatic : ContainerBase, Battery
 {
     public BatteryStatic():base(1){ }
 }

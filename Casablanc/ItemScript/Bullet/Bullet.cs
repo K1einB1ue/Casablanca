@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface Bullet
+public interface Bullet : Item
 {
     
     void Shoot(Gun gun);

@@ -4,7 +4,7 @@ using UnityEngine;
 using XNode;
 
 [CreateNodeMenu("非", menuName = "触发器逻辑节点/非", order = 6)]
-public class NotNode : NodeStatic
+public class NotNode : NodeBase
 {
     [Input(connectionType = ConnectionType.Override,backingValue = ShowBackingValue.Never)] public bool @触发输入;
     [Output] public bool @触发输出;

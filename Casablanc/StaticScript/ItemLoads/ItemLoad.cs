@@ -39,7 +39,7 @@ public class ItemLoad :ScriptableObject
                 return itemStore;
             }
             else {
-                Debug.LogError("错误的物品请求");
+                Debug.LogError("错误的物品请求:类型" + Type.ToString() + "   ID:" + ID.ToString());
                 return null;
             }
         }
@@ -49,6 +49,8 @@ public class ItemLoad :ScriptableObject
 
 public class ItemLoadEditorWindow : EditorWindow
 {
+
+
     [MenuItem("物品/整体调整窗口")]
     static void AddWindow() {
         Rect rect = new Rect(0, 0, 500, 500);
@@ -57,7 +59,29 @@ public class ItemLoadEditorWindow : EditorWindow
     }
 
     private void OnGUI() {
-        if(GUILayout.Button("重置物品动态加载区")) {
+        for(int i=0;i< Selection.objects.Length; i++) {
+            if(Selection.objects[i] is ItemStore) {
+                ItemStore itemStore = (ItemStore)Selection.objects[i];
+                GUILayout.Label("物品名:" + itemStore.name);
+                GUILayout.Label("物品运行时映射状态:");
+                for(int j=0;j< itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.RuntimePacks.Count; j++) {
+                    Context_Pack context_Pack = itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.RuntimePacks[j];
+                    GUILayout.Label("属性名:" + context_Pack.PropertyName + "  数据类型:" + context_Pack.___Data.ToString() + "  数据位置:" + context_Pack.PosInList.ToString());
+                }
+                GUILayout.Label("物品静态时映射状态:");
+                for (int j = 0; j < itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.StaticPacks.Count; j++) {
+                    Context_Pack context_Pack = itemStore.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping.StaticPacks[j];
+                    GUILayout.Label("属性名:" + context_Pack.PropertyName + "  数据类型:" + context_Pack.___Data.ToString() + "  数据位置:" + context_Pack.PosInList.ToString());
+                }
+                GUILayout.Space(20);
+            }
+        }
+
+        if (GUILayout.Button("重置选中物品加载区")) {
+
+        }
+
+        if(GUILayout.Button("重置全部物品动态加载区")) {
             foreach(var load in StaticPath.ItemLoad.itemlist) {
                 if (load != null) {
                     if (load.ItemStaticProperties.ItemStaticValues.ItemStaticContext.ItemContextMapping != null) {

@@ -6,7 +6,7 @@ using UnityEngine;
 using XNode;
 
 
-public abstract class TriggerNodeStatic : NodeStatic, ITrigger {
+public abstract class TriggerNodeStatic : NodeBase, ITrigger {
     private bool NeedTrigger = false;
     private Func<bool> Trigger;
     void ITrigger.TriggerBind(Func<bool> func) {
@@ -19,11 +19,6 @@ public abstract class TriggerNodeStatic : NodeStatic, ITrigger {
     }
     protected bool GetTrigger() {
         return this.Trigger.Invoke();
-    }
-    public override void NodeInit() {
-        if (Trigger == null) {
-            this.NeedTrigger = true;
-        }
     }
 }
 public interface ITrigger {
